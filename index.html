@@ -399,29 +399,17 @@
   .matrix-phrase{ font-size:0.76rem; color:var(--text-muted); line-height:1.4; min-height:2.8em; }
 
   .share-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:8px; }
+  .email-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .email-row input{
+    font-family:var(--sans); font-size:0.88rem; background:var(--surface); color:var(--text);
+    border:1px solid var(--line-strong); border-radius:2px; padding:10px 12px; min-width:220px; flex:1;
+  }
+  .email-row input:focus{ border-color:var(--gold); }
+  .email-row input.input-error{ border-color:var(--wine); }
 
   .site-footer{
     margin-top:56px; padding-top:20px; border-top:1px solid var(--line);
     font-size:0.78rem; color:var(--text-muted); max-width:52ch;
-  }
-
-  #printArea{ display:none; }
-  @media print{
-    body > *:not(#printArea){ display:none !important; }
-    #printArea{ display:block !important; }
-    #printArea .print-doc{
-      max-width:680px; margin:0 auto; color:#1a1a1a;
-      font-family: Georgia, "Times New Roman", serif;
-    }
-    #printArea h1{ font-size:20pt; font-weight:400; margin:0 0 4pt; }
-    #printArea .print-body{
-      white-space:pre-line; font-size:11pt; line-height:1.55; font-family: Georgia, serif;
-    }
-    #printArea .print-body strong{ display:block; margin-top:14pt; font-size:11pt; }
-    #printArea .print-footer{
-      margin-top:22pt; font-size:8pt; color:#555; border-top:0.75pt solid #999; padding-top:8pt;
-      font-family: -apple-system, Arial, sans-serif;
-    }
   }
 
   @media (max-width:560px){
@@ -626,11 +614,15 @@
           <div class="matrix-grid" id="matrixGrid"></div>
         </article>
 
-        <div class="unlock-note">Демо-режим: оплата эмулируется, чтобы можно было оценить интерфейс целиком.</div>
+        <div class="unlock-note">Демо-режим: оплата, а также отправка на почту — эмулируются, чтобы можно было оценить интерфейс целиком.</div>
 
         <div class="share-row">
           <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
           <button class="btn-secondary" id="downloadBtn">Скачать PDF</button>
+        </div>
+
+        <div class="email-row">
+          <input type="email" id="emailInput" placeholder="твой email" autocomplete="email">
           <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
         </div>
       </div>
@@ -641,8 +633,6 @@
     <p>Прототип интерфейса. Расчёты основаны на классических нумерологических формулах (число жизненного пути, квадрат Пифагора) и не являются предсказанием будущего.</p>
   </footer>
 </div>
-
-<div id="printArea" aria-hidden="true"></div>
 
 <script>
 (function(){
@@ -980,9 +970,10 @@
   var copyBtn = document.getElementById("copyBtn");
   var downloadBtn = document.getElementById("downloadBtn");
   var emailBtn = document.getElementById("emailBtn");
+  var emailInput = document.getElementById("emailInput");
 
   var reportText = "";
-  var reportFilename = "put-razbor.txt";
+  var reportFilename = "put-razbor.pdf";
 
   form.addEventListener("submit", function(ev){
     ev.preventDefault();
@@ -1071,7 +1062,7 @@
     document.getElementById("ppYear").textContent = personalYear;
     document.getElementById("ppDominant").textContent = MATRIX_LABELS[dominantDigit];
 
-    reportFilename = "put-razbor-" + String(dd).padStart(2,"0") + "-" + String(mm).padStart(2,"0") + "-" + yyyy + ".txt";
+    reportFilename = "put-razbor-" + String(dd).padStart(2,"0") + "-" + String(mm).padStart(2,"0") + "-" + yyyy + ".pdf";
     reportText = "ПУТЬ — нумерологический разбор\n" +
       "Дата: " + String(dd).padStart(2,"0") + "." + String(mm).padStart(2,"0") + "." + yyyy + "\n\n" +
       "Число жизненного пути: " + lifePath + " (" + info.title + ")\n" + info.essence + "\n\n" +
@@ -1124,44 +1115,271 @@
     }
   });
 
-  function buildPrintHTML(){
-    var lines = reportText.split("\n");
-    var title = lines[0];
-    var rest = lines.slice(1).join("\n").replace(/^\n+/, "");
-    var esc = document.createElement("div");
-    esc.textContent = rest;
-    var escaped = esc.innerHTML;
-    [
-      "Число жизненного пути:","Сильные стороны:","Точки роста:",
-      "Работа и деньги:","Отношения:","СЕГОДНЯ","ЭТОТ МЕСЯЦ","ЭТОТ ГОД","Матрица судьбы:"
-    ].forEach(function(label){
-      escaped = escaped.split(label).join("<strong>" + label + "</strong>");
+  // --- PDF generation: renders the report to a canvas (so Cyrillic text is drawn as
+  // pixels via the browser's own font engine, sidestepping the fact that standard PDF
+  // base-14 fonts have no Cyrillic glyphs), then wraps that raster image in a hand-built
+  // single-page PDF using the browser's native CompressionStream for FlateDecode. ---
+
+  function wrapRuns(ctx, runs, maxWidth, normalFont, boldFont){
+    var words = [];
+    runs.forEach(function(run){
+      run.text.split(" ").forEach(function(w){
+        if(w !== "") words.push({ text:w, bold:run.bold });
+      });
     });
-    return '<div class="print-doc">' +
-      "<h1>" + title + "</h1>" +
-      '<div class="print-body">' + escaped + "</div>" +
-      '<p class="print-footer">Прототип интерфейса. Расчёты основаны на классических нумерологических формулах и не являются предсказанием будущего.</p>' +
-      "</div>";
+    var lines = [];
+    var current = [];
+    var currentWidth = 0;
+    words.forEach(function(word){
+      ctx.font = word.bold ? boldFont : normalFont;
+      var spaceWidth = ctx.measureText(" ").width;
+      var wWidth = ctx.measureText(word.text).width;
+      var extra = current.length ? spaceWidth : 0;
+      if(currentWidth + extra + wWidth > maxWidth && current.length){
+        lines.push(current);
+        current = [word];
+        currentWidth = wWidth;
+      } else {
+        current.push(word);
+        currentWidth += extra + wWidth;
+      }
+    });
+    if(current.length) lines.push(current);
+    return lines;
+  }
+
+  function drawWordLine(ctx, words, x, y, normalFont, boldFont){
+    var cx = x;
+    words.forEach(function(word, i){
+      ctx.font = word.bold ? boldFont : normalFont;
+      if(i > 0) cx += ctx.measureText(" ").width;
+      ctx.fillText(word.text, cx, y);
+      cx += ctx.measureText(word.text).width;
+    });
+  }
+
+  function isLabelLine(line){
+    var idx = line.indexOf(":");
+    return idx > 0 && idx < 40;
+  }
+
+  async function deflateBytes(bytes){
+    if(typeof CompressionStream === "undefined") return null;
+    var cs = new CompressionStream("deflate");
+    var writer = cs.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    var reader = cs.readable.getReader();
+    var chunks = [];
+    var total = 0;
+    while(true){
+      var res = await reader.read();
+      if(res.done) break;
+      chunks.push(res.value);
+      total += res.value.length;
+    }
+    var out = new Uint8Array(total);
+    var offset = 0;
+    chunks.forEach(function(c){ out.set(c, offset); offset += c.length; });
+    return out;
+  }
+
+  function buildPdfBytes(pageWidthPt, pageHeightPt, imgWidth, imgHeight, compressed){
+    var encoder = new TextEncoder();
+    var chunks = [];
+    var offset = 0;
+    var objOffsets = [];
+    function pushStr(str){ var b = encoder.encode(str); chunks.push(b); offset += b.length; }
+    function pushBytes(b){ chunks.push(b); offset += b.length; }
+    function beginObj(num){ objOffsets[num] = offset; pushStr(num + " 0 obj\n"); }
+    function endObj(){ pushStr("endobj\n"); }
+
+    pushStr("%PDF-1.4\n");
+
+    beginObj(1);
+    pushStr("<< /Type /Catalog /Pages 2 0 R >>\n");
+    endObj();
+
+    beginObj(2);
+    pushStr("<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n");
+    endObj();
+
+    beginObj(3);
+    pushStr(
+      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pageWidthPt + " " + pageHeightPt + "] " +
+      "/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\n"
+    );
+    endObj();
+
+    beginObj(4);
+    pushStr(
+      "<< /Type /XObject /Subtype /Image /Width " + imgWidth + " /Height " + imgHeight + " " +
+      "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length " + compressed.length + " >>\nstream\n"
+    );
+    pushBytes(compressed);
+    pushStr("\nendstream\n");
+    endObj();
+
+    var contentStr = "q " + pageWidthPt + " 0 0 " + pageHeightPt + " 0 0 cm /Im0 Do Q";
+    beginObj(5);
+    pushStr("<< /Length " + contentStr.length + " >>\nstream\n" + contentStr + "\nendstream\n");
+    endObj();
+
+    var xrefStart = offset;
+    var objCount = 6;
+    pushStr("xref\n0 " + objCount + "\n");
+    pushStr("0000000000 65535 f \n");
+    for(var i = 1; i < objCount; i++){
+      pushStr(String(objOffsets[i]).padStart(10, "0") + " 00000 n \n");
+    }
+    pushStr("trailer\n<< /Size " + objCount + " /Root 1 0 R >>\nstartxref\n" + xrefStart + "\n%%EOF");
+
+    var total = 0;
+    chunks.forEach(function(c){ total += c.length; });
+    var out = new Uint8Array(total);
+    var pos = 0;
+    chunks.forEach(function(c){ out.set(c, pos); pos += c.length; });
+    return out;
+  }
+
+  async function buildReportPdfBlob(text){
+    var pageWidthPt = 595;
+    var marginPt = 48;
+    var contentWidthPt = pageWidthPt - marginPt * 2;
+    var scale = 2;
+
+    var TITLE_FONT = "bold 20px Georgia, serif";
+    var BODY_FONT = "12px Georgia, serif";
+    var BOLD_FONT = "bold 12px Georgia, serif";
+    var FOOTER_FONT = "9px Arial, sans-serif";
+    var bodyLineHeight = 17;
+    var titleLineHeight = 26;
+    var footerLineHeight = 12;
+    var paraGap = 10;
+
+    var measureCanvas = document.createElement("canvas");
+    var mctx = measureCanvas.getContext("2d");
+
+    var rawLines = text.split("\n");
+    var title = rawLines[0];
+    var bodyLines = rawLines.slice(1);
+    while(bodyLines.length && bodyLines[0] === "") bodyLines.shift();
+
+    var layout = [];
+    bodyLines.forEach(function(line){
+      if(line === ""){ layout.push({ type:"gap" }); return; }
+      var runs;
+      if(isLabelLine(line)){
+        var idx = line.indexOf(":");
+        runs = [{ text:line.slice(0, idx + 1), bold:true }, { text:line.slice(idx + 1), bold:false }];
+      } else {
+        runs = [{ text:line, bold:false }];
+      }
+      wrapRuns(mctx, runs, contentWidthPt, BODY_FONT, BOLD_FONT).forEach(function(w){
+        layout.push({ type:"line", words:w });
+      });
+    });
+
+    var titleLines = wrapRuns(mctx, [{ text:title, bold:true }], contentWidthPt, TITLE_FONT, TITLE_FONT);
+
+    var totalHeight = marginPt * 2;
+    totalHeight += titleLines.length * titleLineHeight + paraGap;
+    layout.forEach(function(item){ totalHeight += item.type === "gap" ? paraGap : bodyLineHeight; });
+    totalHeight += paraGap + footerLineHeight * 2;
+    var pageHeightPt = Math.ceil(totalHeight);
+
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(pageWidthPt * scale);
+    canvas.height = Math.ceil(pageHeightPt * scale);
+    var ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageWidthPt, pageHeightPt);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.textBaseline = "alphabetic";
+
+    var y = marginPt + titleLineHeight * 0.75;
+    titleLines.forEach(function(wline){
+      drawWordLine(ctx, wline, marginPt, y, TITLE_FONT, TITLE_FONT);
+      y += titleLineHeight;
+    });
+    y += paraGap;
+
+    layout.forEach(function(item){
+      if(item.type === "gap"){ y += paraGap; return; }
+      drawWordLine(ctx, item.words, marginPt, y, BODY_FONT, BOLD_FONT);
+      y += bodyLineHeight;
+    });
+
+    y += paraGap;
+    ctx.font = FOOTER_FONT;
+    ctx.fillStyle = "#666666";
+    ctx.fillText("Прототип интерфейса. Расчёты основаны на классических нумерологических", marginPt, y);
+    y += footerLineHeight;
+    ctx.fillText("формулах и не являются предсказанием будущего.", marginPt, y);
+
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var rgba = imgData.data;
+    var rgb = new Uint8Array((rgba.length / 4) * 3);
+    for(var i = 0, j = 0; i < rgba.length; i += 4, j += 3){
+      rgb[j] = rgba[i]; rgb[j+1] = rgba[i+1]; rgb[j+2] = rgba[i+2];
+    }
+
+    var compressed = await deflateBytes(rgb);
+    if(!compressed) throw new Error("CompressionStream unsupported");
+
+    var pdfBytes = buildPdfBytes(pageWidthPt, pageHeightPt, canvas.width, canvas.height, compressed);
+    return new Blob([pdfBytes], { type:"application/pdf" });
+  }
+
+  function triggerDownload(blob, filename){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
   }
 
   downloadBtn.addEventListener("click", function(){
     if(!reportText) return;
-    document.getElementById("printArea").innerHTML = buildPrintHTML();
-    var originalTitle = document.title;
-    document.title = reportFilename.replace(/\.txt$/, "");
-    window.print();
-    setTimeout(function(){ document.title = originalTitle; }, 1000);
+    var originalLabel = downloadBtn.textContent;
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = "Готовим PDF...";
+    buildReportPdfBlob(reportText).then(function(blob){
+      triggerDownload(blob, reportFilename);
+    }).catch(function(){
+      var blob = new Blob([reportText], { type:"text/plain;charset=utf-8" });
+      triggerDownload(blob, reportFilename.replace(/\.pdf$/, ".txt"));
+    }).finally(function(){
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = originalLabel;
+    });
   });
 
   emailBtn.addEventListener("click", function(){
-    var subject = "Твой нумерологический разбор — ПУТЬ";
-    var body = reportText;
-    var limit = 1500;
-    if(body.length > limit){
-      body = body.slice(0, limit) + "\n\n… (полный текст — через «Скачать» или «Скопировать разбор»)";
+    var email = emailInput.value.trim();
+    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailPattern.test(email)){
+      emailInput.classList.add("input-error");
+      emailInput.focus();
+      var originalLabel = emailBtn.textContent;
+      emailBtn.textContent = "Проверь email";
+      setTimeout(function(){ emailBtn.textContent = originalLabel; }, 1800);
+      return;
     }
-    var mailtoUrl = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
-    window.location.href = mailtoUrl;
+    emailInput.classList.remove("input-error");
+    emailBtn.disabled = true;
+    emailBtn.textContent = "Отправляем...";
+    setTimeout(function(){
+      emailBtn.textContent = "Отправлено ✓";
+      setTimeout(function(){
+        emailBtn.disabled = false;
+        emailBtn.textContent = "Отправить на почту";
+      }, 2000);
+    }, 900);
   });
 })();
 </script>
