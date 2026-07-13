@@ -1,0 +1,1279 @@
+<title>Путь — число жизненного пути</title>
+<style>
+  :root{
+    --bg:#170F22;
+    --surface:#211732;
+    --surface-2:#2B1E3F;
+    --text:#ECE4F6;
+    --text-muted:#A79BC4;
+    --line: rgba(236,228,246,0.14);
+    --line-strong: rgba(236,228,246,0.28);
+    --gold:#B79AEA;
+    --gold-rgb: 183,154,234;
+    --gold-strong:#D3BEF5;
+    --wine:#D98AB0;
+    --focus:#6AA9F4;
+    --star-rgb: 183,154,234;
+    --star-line-rgb: 236,228,246;
+    --shadow: 0 1px 0 rgba(8,4,14,0.45);
+    --serif: "Iowan Old Style","Palatino Linotype","Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#EFE9F6;
+      --surface:#FFFFFF;
+      --surface-2:#E4DCF0;
+      --text:#251733;
+      --text-muted:#6E5F86;
+      --line: rgba(37,23,51,0.14);
+      --line-strong: rgba(37,23,51,0.28);
+      --gold:#6B4AA0;
+      --gold-rgb: 107,74,160;
+      --gold-strong:#563A85;
+      --wine:#9C3D68;
+      --focus:#2461AD;
+      --star-rgb: 107,74,160;
+      --star-line-rgb: 37,23,51;
+      --shadow: 0 1px 0 rgba(37,23,51,0.08);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#170F22; --surface:#211732; --surface-2:#2B1E3F; --text:#ECE4F6; --text-muted:#A79BC4;
+    --line: rgba(236,228,246,0.14); --line-strong: rgba(236,228,246,0.28);
+    --gold:#B79AEA; --gold-rgb: 183,154,234; --gold-strong:#D3BEF5; --wine:#D98AB0; --focus:#6AA9F4;
+    --star-rgb: 183,154,234; --star-line-rgb: 236,228,246;
+    --shadow: 0 1px 0 rgba(8,4,14,0.45);
+  }
+  :root[data-theme="light"]{
+    --bg:#EFE9F6; --surface:#FFFFFF; --surface-2:#E4DCF0; --text:#251733; --text-muted:#6E5F86;
+    --line: rgba(37,23,51,0.14); --line-strong: rgba(37,23,51,0.28);
+    --gold:#6B4AA0; --gold-rgb: 107,74,160; --gold-strong:#563A85; --wine:#9C3D68; --focus:#2461AD;
+    --star-rgb: 107,74,160; --star-line-rgb: 37,23,51;
+    --shadow: 0 1px 0 rgba(37,23,51,0.08);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--gold); color:var(--bg); }
+  a{ color:var(--gold); }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:3px; }
+
+  #bgCanvas{ position:fixed; inset:0; width:100vw; height:100vh; display:block; }
+  .bg-vignette{
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 15%, transparent 0%, var(--bg) 76%);
+    pointer-events:none;
+  }
+  .bg-grain{
+    position:fixed; inset:0; pointer-events:none; opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .mandala{
+    position:fixed; top:38%; left:50%; width:min(1100px, 145vw); aspect-ratio:1;
+    transform:translate(-50%,-50%); pointer-events:none; z-index:0;
+  }
+  .mandala-ring{
+    position:absolute; border-radius:50%; border:1px solid var(--line);
+  }
+  .mandala-ring.r1{ inset:0; }
+  .mandala-ring.r2{ inset:9%; }
+  .mandala-ring.r3{ inset:17%; border-style:dashed; opacity:0.7; }
+  .mandala-ticks{
+    position:absolute; inset:2.5%; border-radius:50%;
+    background:repeating-conic-gradient(var(--line-strong) 0deg 0.5deg, transparent 0.5deg 14.9deg);
+    -webkit-mask:radial-gradient(circle, transparent 0 97%, #000 97.6% 98.4%, transparent 99%);
+            mask:radial-gradient(circle, transparent 0 97%, #000 97.6% 98.4%, transparent 99%);
+    animation:spin-slow 300s linear infinite;
+  }
+  .mandala-spokes{
+    position:absolute; inset:0; border-radius:50%;
+    background:repeating-conic-gradient(var(--line) 0deg 0.4deg, transparent 0.4deg 44.6deg);
+    -webkit-mask:radial-gradient(circle, transparent 0 60%, #000 61%, #000 99%, transparent 100%);
+            mask:radial-gradient(circle, transparent 0 60%, #000 61%, #000 99%, transparent 100%);
+    animation:spin-slow 220s linear infinite reverse;
+  }
+  @media (prefers-reduced-motion: reduce){ .mandala-ticks, .mandala-spokes{ animation:none; } }
+  @keyframes spin-slow{ to{ transform:rotate(360deg); } }
+  .mandala-number{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-size:min(34vw,420px); line-height:1; color:var(--gold);
+    opacity:0; transition:opacity 1.4s ease; user-select:none;
+  }
+  .mandala-number.visible{ opacity:0.055; }
+
+  .rail{
+    position:fixed; top:0; height:100vh; width:72px; display:none;
+    align-items:center; justify-content:center; pointer-events:none;
+  }
+  .rail-left{ left:0; } .rail-right{ right:0; }
+  @media (min-width:1280px){ .rail{ display:flex; } }
+  .rail-line{ position:absolute; top:32px; bottom:32px; width:1px; background:var(--line); }
+  .rail-left .rail-line{ left:36px; } .rail-right .rail-line{ right:36px; }
+  .rail-text{
+    writing-mode:vertical-rl; letter-spacing:0.35em; font-size:0.66rem;
+    color:var(--text-muted); opacity:0.5; white-space:nowrap; font-family:var(--sans);
+  }
+
+  .theme-toggle{
+    position:fixed; top:20px; right:20px; z-index:5;
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--line-strong);
+    background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:border-color 0.15s ease;
+  }
+  .theme-toggle:hover{ border-color:var(--gold); }
+  .theme-toggle .glyph{ width:13px; height:13px; border-radius:50%; background:var(--gold); position:relative; }
+  .theme-toggle .glyph.sun{
+    box-shadow:
+      0 -9px 0 -6.5px var(--gold), 0 9px 0 -6.5px var(--gold),
+      -9px 0 0 -6.5px var(--gold), 9px 0 0 -6.5px var(--gold),
+      6.4px -6.4px 0 -6.5px var(--gold), -6.4px 6.4px 0 -6.5px var(--gold),
+      6.4px 6.4px 0 -6.5px var(--gold), -6.4px -6.4px 0 -6.5px var(--gold);
+  }
+  .theme-toggle .glyph.moon::after{
+    content:""; position:absolute; top:-2px; right:-3.5px; width:13px; height:13px;
+    border-radius:50%; background:var(--surface);
+  }
+
+  .divider{ display:flex; align-items:center; gap:12px; margin:40px 0; }
+  .divider::before,.divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .divider-mark{ width:6px; height:6px; background:var(--gold); transform:rotate(45deg); flex:none; opacity:0.8; }
+
+  .framed{ position:relative; }
+  .corner{ position:absolute; width:12px; height:12px; border-color:var(--gold); opacity:0.55; pointer-events:none; }
+  .corner-tl{ top:-1px; left:-1px; border-top:1px solid; border-left:1px solid; }
+  .corner-tr{ top:-1px; right:-1px; border-top:1px solid; border-right:1px solid; }
+  .corner-bl{ bottom:-1px; left:-1px; border-bottom:1px solid; border-left:1px solid; }
+  .corner-br{ bottom:-1px; right:-1px; border-bottom:1px solid; border-right:1px solid; }
+
+  .steps{
+    display:flex; flex-direction:column; gap:14px; margin:32px 0 8px;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:24px 0;
+  }
+  .step{ display:flex; align-items:baseline; gap:16px; }
+  .step-num{
+    font-family:var(--mono); color:var(--gold); font-size:0.85rem;
+    font-variant-numeric:tabular-nums; flex:none; width:2.4ch;
+  }
+  .step-text{ font-size:0.92rem; color:var(--text-muted); }
+
+  .page{ position:relative; max-width:680px; margin:0 auto; padding:0 24px 96px; }
+
+  .topbar{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    padding:28px 0 20px; border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .wordmark{
+    font-family:var(--serif); font-size:1.15rem; letter-spacing:0.14em; font-style:italic;
+    color:var(--text);
+  }
+  .wordmark span{ color:var(--gold); font-style:normal; }
+  .tagline{
+    font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted);
+  }
+
+  .eyebrow{
+    font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold);
+    margin:0 0 14px;
+  }
+
+  .hero{ padding:56px 0 8px; }
+  h1{
+    font-family:var(--serif); font-weight:400; font-style:normal;
+    font-size:clamp(1.7rem, 1.35rem + 1.6vw, 2.5rem);
+    line-height:1.18; letter-spacing:-0.01em; margin:0 0 18px; text-wrap:balance;
+  }
+  .lede{
+    color:var(--text-muted); max-width:46ch; margin:0 0 32px; font-size:1.02rem;
+  }
+
+  .ledger-form{
+    display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-size:0.66rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted);
+  }
+  .field input{
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    font-size:1.3rem; width:3.4em; background:var(--surface); color:var(--text);
+    border:1px solid var(--line-strong); border-radius:2px; padding:10px 8px; text-align:center;
+  }
+  .field-year input{ width:4.6em; }
+  .field input:focus{ border-color:var(--gold); }
+  .sep{ font-family:var(--serif); font-size:1.3rem; color:var(--text-muted); padding-bottom:10px; }
+
+  .btn-primary{
+    font-family:var(--sans); font-size:0.9rem; font-weight:600; letter-spacing:0.02em;
+    background:var(--gold); color:var(--bg); border:none; border-radius:2px;
+    padding:12px 22px; cursor:pointer; margin-left:4px;
+    transition:background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-primary:hover{ background:var(--gold-strong); }
+  .btn-primary:active{ transform:translateY(1px); }
+
+  .btn-secondary{
+    font-family:var(--sans); font-size:0.84rem; font-weight:600;
+    background:transparent; color:var(--gold); border:1px solid var(--line-strong);
+    border-radius:2px; padding:10px 16px; cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-secondary:hover{ border-color:var(--gold); }
+
+  .error{ color:var(--wine); font-size:0.88rem; margin-top:14px; }
+
+  .result{ padding-top:48px; }
+
+  .seal-wrap{
+    position:relative; width:min(280px, 62vw); aspect-ratio:1; margin:0 auto 28px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .seal-ring{
+    position:absolute; inset:-16%; border-radius:50%;
+    background: repeating-conic-gradient(var(--line-strong) 0deg 1.4deg, transparent 1.4deg 9deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 61%, #000 62% 67%, transparent 68%);
+            mask: radial-gradient(circle, transparent 0 61%, #000 62% 67%, transparent 68%);
+    animation: spin 160s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .seal-ring{ animation:none; } }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .seal{
+    position:relative; width:78%; aspect-ratio:1;
+    border:1px solid var(--line-strong); outline:1px solid var(--line-strong); outline-offset:5px;
+    border-radius:6px; transform:rotate(-1.4deg);
+    background:var(--surface);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    padding:12px; text-align:center;
+  }
+  .seal-label{
+    font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted);
+  }
+  .seal-number{
+    font-family:var(--serif); font-variant-numeric:tabular-nums;
+    font-size:clamp(3.2rem, 2.6rem + 3vw, 4.6rem); line-height:1; color:var(--gold);
+  }
+  .seal-title{ font-family:var(--serif); font-style:italic; font-size:1rem; color:var(--text); }
+
+  .teaser{
+    text-align:center; max-width:42ch; margin:0 auto 40px; color:var(--text-muted); font-size:1rem;
+  }
+
+  .paywall{
+    background:var(--surface); border:1px solid var(--line); border-radius:4px;
+    padding:28px 24px; margin-bottom:8px;
+  }
+  .paywall-eyebrow{
+    font-family:var(--serif); font-style:italic; font-size:1.05rem; margin:0 0 14px; color:var(--text);
+  }
+  .paywall-list{ margin:0 0 22px; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .paywall-list li{
+    padding-left:20px; position:relative; color:var(--text-muted); font-size:0.94rem;
+  }
+  .paywall-list li::before{
+    content:"·"; position:absolute; left:4px; top:-2px; color:var(--gold); font-size:1.4rem;
+  }
+  .btn-unlock{ width:100%; padding:14px; font-size:0.98rem; }
+  .btn-unlock[disabled]{ opacity:0.6; cursor:progress; }
+
+  .badge-open{
+    display:inline-flex; align-items:center; gap:6px; font-size:0.66rem; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--gold); background:rgba(var(--gold-rgb),0.12);
+    border:1px solid rgba(var(--gold-rgb),0.4); border-radius:100px; padding:5px 12px; margin-bottom:20px;
+  }
+  .badge-open::before{ content:"●"; font-size:0.55rem; }
+
+  .passport{
+    display:flex; border:1px solid var(--line-strong); border-radius:4px; background:var(--surface);
+    margin-bottom:32px; overflow:hidden;
+  }
+  .passport-item{
+    flex:1; padding:16px 12px; text-align:center; border-right:1px dashed var(--line-strong);
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .passport-item:last-child{ border-right:none; }
+  .passport-num{
+    font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:1.5rem; color:var(--gold);
+  }
+  .passport-label{ font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); }
+
+  .unlock-note{
+    font-size:0.8rem; color:var(--text-muted); border:1px dashed var(--line-strong);
+    border-radius:3px; padding:10px 14px; margin:0 0 36px;
+  }
+
+  .full{ padding:32px 28px 12px; }
+  .full h2{
+    font-family:var(--serif); font-weight:400; font-size:1.3rem; margin:0 0 12px;
+  }
+  .full h3{
+    font-family:var(--sans); font-weight:600; font-size:0.78rem; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--text-muted); margin:0 0 10px;
+  }
+  .character > p{ color:var(--text-muted); margin-bottom:24px; }
+
+  .trait-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px; }
+  .trait-list{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .trait-list li{ padding-left:16px; position:relative; font-size:0.9rem; color:var(--text); }
+  .trait-list.strengths li::before{ content:"+"; position:absolute; left:0; color:var(--gold); font-weight:700; }
+  .trait-list.growth li::before{ content:"–"; position:absolute; left:0; color:var(--wine); font-weight:700; }
+
+  .sphere-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:8px; }
+  .sphere-card{ background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:16px; }
+  .sphere-card h3{ margin-bottom:8px; }
+  .sphere-card p{ font-size:0.88rem; color:var(--text-muted); margin:0; }
+
+  .periods{
+    display:flex; flex-direction:column; gap:20px; margin:36px 0;
+  }
+  .period-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:20px 20px 22px;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .period-label{ font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); }
+  .period-number{
+    font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:1.7rem; color:var(--gold);
+    margin-bottom:8px;
+  }
+  .period-card h3{ margin-top:20px; }
+  .period-card p{ font-size:0.84rem; color:var(--text-muted); margin:0; }
+  .period-card .period-lede{ font-size:0.95rem; color:var(--text); line-height:1.6; margin-top:4px; }
+  .period-card .period-advice{
+    color:var(--text); font-style:italic; margin-top:16px; padding-top:12px;
+    border-top:1px dashed var(--line-strong);
+  }
+  .period-card .watch-note{
+    font-size:0.86rem; color:var(--text-muted); border-left:2px solid var(--wine);
+    background:var(--surface-2); border-radius:0 3px 3px 0; padding:10px 14px; margin-top:16px;
+  }
+  .period-card .timing-row{
+    display:flex; flex-wrap:wrap; gap:0 6px; font-size:0.86rem; color:var(--text-muted); margin:6px 0 0;
+  }
+  .timing-row strong{ color:var(--gold); font-weight:600; }
+  .period-aspects{
+    margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;
+  }
+  .period-aspects li{ font-size:0.86rem; color:var(--text-muted); line-height:1.55; }
+  .period-aspects strong{ color:var(--gold); font-weight:600; display:block; font-size:0.68rem;
+    letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
+
+  .matrix-intro{ color:var(--text-muted); font-size:0.92rem; max-width:48ch; }
+
+  .matrix-legend{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    font-size:0.76rem; color:var(--text-muted); margin:18px 0 6px;
+  }
+  .matrix-legend .legend-item{ display:flex; align-items:center; gap:6px; }
+  .matrix-legend .dot-row{ display:flex; gap:3px; }
+
+  .matrix-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line-strong); border:1px solid var(--line-strong); border-radius:3px;
+    overflow:hidden; margin:14px 0 20px;
+  }
+  .matrix-cell{
+    background:var(--surface); padding:18px 10px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    cursor:default;
+  }
+  .matrix-label{
+    font-family:var(--serif); font-style:italic; font-size:1.05rem; color:var(--text);
+  }
+  .dot-row{ display:flex; gap:4px; }
+  .dot{
+    width:8px; height:8px; border-radius:50%; border:1px solid var(--line-strong); flex:none;
+  }
+  .dot.filled{ background:var(--gold); border-color:var(--gold); }
+  .matrix-phrase{ font-size:0.76rem; color:var(--text-muted); line-height:1.4; min-height:2.8em; }
+
+  .share-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:8px; }
+
+  .site-footer{
+    margin-top:56px; padding-top:20px; border-top:1px solid var(--line);
+    font-size:0.78rem; color:var(--text-muted); max-width:52ch;
+  }
+
+  #printArea{ display:none; }
+  @media print{
+    body > *:not(#printArea){ display:none !important; }
+    #printArea{ display:block !important; }
+    #printArea .print-doc{
+      max-width:680px; margin:0 auto; color:#1a1a1a;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    #printArea h1{ font-size:20pt; font-weight:400; margin:0 0 4pt; }
+    #printArea .print-body{
+      white-space:pre-line; font-size:11pt; line-height:1.55; font-family: Georgia, serif;
+    }
+    #printArea .print-body strong{ display:block; margin-top:14pt; font-size:11pt; }
+    #printArea .print-footer{
+      margin-top:22pt; font-size:8pt; color:#555; border-top:0.75pt solid #999; padding-top:8pt;
+      font-family: -apple-system, Arial, sans-serif;
+    }
+  }
+
+  @media (max-width:560px){
+    .trait-grid, .sphere-grid{ grid-template-columns:1fr; }
+  }
+  @media (max-width:480px){
+    .seal-wrap{ width:min(240px, 74vw); }
+    .passport{ flex-direction:column; }
+    .passport-item{ border-right:none; border-bottom:1px dashed var(--line-strong); }
+    .passport-item:last-child{ border-bottom:none; }
+  }
+</style>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div class="bg-vignette" aria-hidden="true"></div>
+
+<div class="mandala" aria-hidden="true">
+  <div class="mandala-ring r1"></div>
+  <div class="mandala-ring r2"></div>
+  <div class="mandala-ring r3"></div>
+  <div class="mandala-spokes"></div>
+  <div class="mandala-ticks"></div>
+  <div class="mandala-number" id="mandalaNumber">7</div>
+</div>
+
+<div class="bg-grain" aria-hidden="true"></div>
+
+<div class="rail rail-left" aria-hidden="true">
+  <div class="rail-line"></div>
+  <span class="rail-text">ЧИСЛО · ПУТЬ · СУДЬБА · МАТРИЦА · ЧИСЛО · ПУТЬ · СУДЬБА · МАТРИЦА</span>
+</div>
+<div class="rail rail-right" aria-hidden="true">
+  <div class="rail-line"></div>
+  <span class="rail-text">1 2 3 4 5 6 7 8 9 · 1 2 3 4 5 6 7 8 9 · 1 2 3 4 5 6 7 8 9</span>
+</div>
+
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+  <span class="glyph" id="themeGlyph"></span>
+</button>
+
+<div class="page">
+  <header class="topbar">
+    <div class="wordmark">ПУТЬ<span>·</span></div>
+    <div class="tagline">нумерология по дате рождения</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Расчёт по дате рождения</p>
+      <h1>Дата рождения — не случайность.<br>У неё есть число.</h1>
+      <p class="lede">Введи дату — получишь число жизненного пути и матрицу судьбы, рассчитанные по классическим нумерологическим формулам.</p>
+      <form class="ledger-form" id="dateForm" autocomplete="off" novalidate>
+        <div class="field">
+          <label for="dd">ДД</label>
+          <input id="dd" name="dd" inputmode="numeric" maxlength="2" placeholder="23">
+        </div>
+        <span class="sep">.</span>
+        <div class="field">
+          <label for="mm">ММ</label>
+          <input id="mm" name="mm" inputmode="numeric" maxlength="2" placeholder="05">
+        </div>
+        <span class="sep">.</span>
+        <div class="field field-year">
+          <label for="yyyy">ГГГГ</label>
+          <input id="yyyy" name="yyyy" inputmode="numeric" maxlength="4" placeholder="1990">
+        </div>
+        <button type="submit" class="btn-primary">Рассчитать</button>
+      </form>
+      <p class="error" id="formError" hidden></p>
+
+      <div class="steps">
+        <div class="step"><span class="step-num">01</span><span class="step-text">Вводишь дату рождения</span></div>
+        <div class="step"><span class="step-num">02</span><span class="step-text">Считаем число жизненного пути и матрицу судьбы по формулам</span></div>
+        <div class="step"><span class="step-num">03</span><span class="step-text">Получаешь разбор характера, сфер жизни и прогноз</span></div>
+      </div>
+    </section>
+
+    <section class="result" id="result" hidden>
+      <div class="seal-wrap">
+        <div class="seal-ring" aria-hidden="true"></div>
+        <div class="seal">
+          <span class="seal-label">Число жизненного пути</span>
+          <span class="seal-number" id="lifePathNumber">–</span>
+          <span class="seal-title" id="lifePathTitle"></span>
+        </div>
+      </div>
+      <p class="teaser" id="lifePathTeaser"></p>
+
+      <div class="paywall framed" id="paywall">
+        <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
+        <span class="corner corner-bl"></span><span class="corner corner-br"></span>
+        <p class="paywall-eyebrow">Полный разбор доступен</p>
+        <ul class="paywall-list">
+          <li>Суть характера, сильные стороны и точки роста</li>
+          <li>Сферы: работа и деньги, отношения</li>
+          <li>Прогноз на сегодня, месяц (с конкретным шагом) и год</li>
+          <li>Матрица судьбы — 9 черт характера с расшифровкой каждой</li>
+          <li>Персональная рекомендация дня</li>
+        </ul>
+        <button class="btn-primary btn-unlock" id="unlockBtn">Открыть за 49 ₽</button>
+      </div>
+
+      <div class="full framed" id="fullContent" hidden>
+        <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
+        <span class="corner corner-bl"></span><span class="corner corner-br"></span>
+        <span class="badge-open">Разбор открыт</span>
+
+        <div class="passport">
+          <div class="passport-item">
+            <span class="passport-num" id="ppLifePath"></span>
+            <span class="passport-label">Число пути</span>
+          </div>
+          <div class="passport-item">
+            <span class="passport-num" id="ppYear"></span>
+            <span class="passport-label">Число года</span>
+          </div>
+          <div class="passport-item">
+            <span class="passport-num" id="ppDominant"></span>
+            <span class="passport-label">Доминанта матрицы</span>
+          </div>
+        </div>
+
+        <div class="divider"><span class="divider-mark"></span></div>
+
+        <article class="character">
+          <h2>Твой характер</h2>
+          <p id="characterText"></p>
+
+          <div class="trait-grid">
+            <div>
+              <h3>Сильные стороны</h3>
+              <ul class="trait-list strengths" id="strengthsList"></ul>
+            </div>
+            <div>
+              <h3>Точки роста</h3>
+              <ul class="trait-list growth" id="growthList"></ul>
+            </div>
+          </div>
+
+          <div class="sphere-grid">
+            <div class="sphere-card">
+              <h3>Работа и деньги</h3>
+              <p id="careerText"></p>
+            </div>
+            <div class="sphere-card">
+              <h3>Отношения</h3>
+              <p id="loveText"></p>
+            </div>
+          </div>
+        </article>
+
+        <div class="periods">
+          <div class="period-card">
+            <span class="period-label">Сегодня</span>
+            <span class="period-number" id="dayNumber"></span>
+            <p class="period-lede" id="dayText"></p>
+            <h3>Стоит сделать</h3>
+            <ul class="trait-list strengths" id="dayDo"></ul>
+            <h3>Не стоит</h3>
+            <ul class="trait-list growth" id="dayAvoid"></ul>
+            <p class="watch-note" id="dayWatch"></p>
+          </div>
+
+          <div class="period-card">
+            <span class="period-label">Этот месяц</span>
+            <span class="period-number" id="monthNumber"></span>
+            <p class="period-lede" id="monthVector"></p>
+            <h3>Разбор по сферам</h3>
+            <ul class="period-aspects" id="monthSpheres"></ul>
+            <h3>Тайминг внутри месяца</h3>
+            <p class="timing-row"><strong>Пиковые дни:</strong> <span id="monthPeakDays"></span></p>
+            <p class="timing-row"><strong>Дни риска:</strong> <span id="monthRiskDays"></span></p>
+          </div>
+
+          <div class="period-card">
+            <span class="period-label">Этот год</span>
+            <span class="period-number" id="yearNumber"></span>
+            <p class="period-lede" id="yearTheme"></p>
+            <h3>Разбор по сферам</h3>
+            <ul class="period-aspects" id="yearSpheres"></ul>
+            <h3>Тайминг внутри года</h3>
+            <p class="timing-row"><strong>Активные месяцы:</strong> <span id="yearActiveMonths"></span></p>
+            <p class="timing-row"><strong>Тихие месяцы:</strong> <span id="yearQuietMonths"></span></p>
+            <p class="watch-note" id="yearShadow"></p>
+            <p class="period-advice" id="yearAction"></p>
+          </div>
+        </div>
+
+        <div class="divider"><span class="divider-mark"></span></div>
+
+        <article class="matrix-section">
+          <h2>Матрица судьбы</h2>
+          <p class="matrix-intro">Твой психологический портрет в 9 чертах характера, вычисленный по дате рождения. Чем больше точек закрашено — тем сильнее выражена черта.</p>
+          <div class="matrix-legend">
+            <span class="legend-item"><span class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span> пусто</span>
+            <span class="legend-item"><span class="dot-row"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span></span> норма</span>
+            <span class="legend-item"><span class="dot-row"><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span></span> избыток</span>
+          </div>
+          <div class="matrix-grid" id="matrixGrid"></div>
+        </article>
+
+        <div class="unlock-note">Демо-режим: оплата эмулируется, чтобы можно было оценить интерфейс целиком.</div>
+
+        <div class="share-row">
+          <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
+          <button class="btn-secondary" id="downloadBtn">Скачать PDF</button>
+          <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Прототип интерфейса. Расчёты основаны на классических нумерологических формулах (число жизненного пути, квадрат Пифагора) и не являются предсказанием будущего.</p>
+  </footer>
+</div>
+
+<div id="printArea" aria-hidden="true"></div>
+
+<script>
+(function(){
+  var LIFE_PATH = {
+    1:{ title:"Лидер", teaser:"Ты рождён вести, а не следовать.",
+      essence:"Единица — число первопроходца. Тебе тесно в чужих сценариях: ты видишь цель раньше других и идёшь к ней напрямую, даже если рядом никого. Ты не создан для роли второго — и мир интуитивно ставит тебя во главе, часто против твоей воли.",
+      strengths:["Решительность и инициатива","Ясное чувство направления","Способность начинать с нуля"],
+      growth:["Нетерпение к тем, кто медленнее","Сложно делить контроль","Одиночество на вершине"],
+      career:"В работе тебе нужна своя зона ответственности — под чужим руководством ты быстро выгораешь; предпринимательство и руководство раскрывают тебя лучше найма.",
+      love:"В отношениях ты ищешь равного, а не ведомого — партнёр, который не боится спорить с тобой, держит тебя дольше, чем тот, кто во всём соглашается." },
+    2:{ title:"Дипломат", teaser:"Твоя сила — в тонком чувстве другого человека.",
+      essence:"Двойка живёт в паре и в диалоге. Ты чувствуешь настроение комнаты раньше, чем оно названо словами, и умеешь примирить несовместимое там, где другие видят только конфликт. Твоя сила тихая, но именно на ней держатся команды и семьи.",
+      strengths:["Эмпатия и такт","Умение слушать","Дар примирять"],
+      growth:["Растворяться в чужих ожиданиях","Бояться конфликта, когда он нужен","Откладывать своё ради чужого"],
+      career:"Тебе подходят роли, где важен человек — переговоры, поддержка, партнёрство; в одиночной, конкурентной работе ты теряешь энергию.",
+      love:"Ты умеешь любить бережно, но рискуешь забыть спросить, чего хочешь сам — партнёру стоит научиться спрашивать тебя первым." },
+    3:{ title:"Творец", teaser:"Слово, образ, идея — твой родной язык.",
+      essence:"Тройка — число самовыражения. Тебе нужно место, где можно говорить, показывать, создавать — иначе энергия уходит в тревогу и суету. Люди тянутся к твоей лёгкости, даже когда сам ты чувствуешь себя рассеянным.",
+      strengths:["Яркая речь и воображение","Обаяние без усилий","Способность вдохновлять других"],
+      growth:["Разбросанность между идеями","Сложно доводить до конца","Уязвимость к чужим оценкам"],
+      career:"Тебе идут профессии с публичностью и творчеством — от контента до сцены; рутинная незаметная работа душит твой главный ресурс.",
+      love:"Партнёру важно давать тебе внимание и слышать твои идеи всерьёз — без этого ты ищешь признание на стороне, даже не желая того." },
+    4:{ title:"Строитель", teaser:"Ты строишь то, что переживёт момент.",
+      essence:"Четвёрка ценит порядок, систему, надёжность. Там, где другие видят рутину, ты видишь фундамент, на котором можно строить годами. Люди доверяют тебе именно потому, что на твоё слово можно опереться.",
+      strengths:["Надёжность и дисциплина","Умение доводить дело до конца","Трезвый взгляд на риски"],
+      growth:["Держаться за структуру, когда её пора менять","Тяжело даются спонтанные решения","Излишняя строгость к себе"],
+      career:"Тебе идут профессии, где ценится системность — управление процессами, финансы, инженерия; хаотичная среда без правил выматывает.",
+      love:"Ты проявляешь любовь через дела, а не слова — партнёру важно научиться считывать заботу в поступках, а не ждать признаний." },
+    5:{ title:"Странник", teaser:"Свобода для тебя важнее стабильности.",
+      essence:"Пятёрка — число перемен и любопытства. Ты быстро устаёшь от одного и того же и расцветаешь там, где непредсказуемо, ново, в движении. Свобода для тебя не роскошь, а условие, без которого пропадает вкус к жизни.",
+      strengths:["Адаптивность","Смелость пробовать новое","Заразительная энергия"],
+      growth:["Трудно доводить начатое до конца","Импульсивные решения","Бегство от рутины, когда она необходима"],
+      career:"Тебе подходит работа с разнообразием задач и свободой графика — проекты, путешествия, продажи; жёсткий офисный режим тебя душит.",
+      love:"Тебе нужен партнёр, который не держит на коротком поводке — привязанность держится там, где есть доверие, а не контроль." },
+    6:{ title:"Хранитель", teaser:"Забота о других — твой способ любить.",
+      essence:"Шестёрка отвечает за дом, семью, ответственность за близких. Тебе важно, чтобы вокруг был порядок и тепло, и ты готов ради этого многим жертвовать — иногда собой. Люди чувствуют в тебе опору, даже не зная почему.",
+      strengths:["Забота и надёжность","Развитое чувство долга","Умение создавать уют и стабильность"],
+      growth:["Жертвовать собой без напоминания","Сложно принимать помощь","Гиперответственность за чужие проблемы"],
+      career:"Тебе подходят профессии, связанные с заботой и ответственностью — медицина, образование, управление командой; безличная механическая работа не даёт отдачи.",
+      love:"Ты вкладываешься в отношения глубоко и надолго — но стоит следить, чтобы забота не превращалась в контроль над тем, кого любишь." },
+    7:{ title:"Мыслитель", teaser:"Тебе нужна тишина, чтобы услышать себя.",
+      essence:"Семёрка ищет смысл, а не одобрение. Ты доверяешь внутреннему знанию больше, чем чужим мнениям, и умеешь оставаться собой в одиночестве, которое других пугает. Люди считывают в тебе глубину, даже когда ты молчишь.",
+      strengths:["Аналитический ум","Интуиция и наблюдательность","Устойчивость к чужому мнению"],
+      growth:["Отстранённость от близких","Скрытность даже там, где стоит открыться","Излишний перфекционизм в идеях"],
+      career:"Тебе подходит работа, требующая исследования и глубины — аналитика, наука, экспертиза; поверхностная суета быстро обесценивается в твоих глазах.",
+      love:"Тебе нужно время в одиночестве, даже в паре — партнёру стоит не принимать эту потребность на свой счёт." },
+    8:{ title:"Управляющий", teaser:"Власть и деньги ты понимаешь на уровне инстинкта.",
+      essence:"Восьмёрка — число масштаба: ресурсов, влияния, результата. Ты мыслишь категориями «сколько» и «насколько долго» и умеешь превращать идею в актив там, где другие видят только мечту.",
+      strengths:["Стратегическое мышление","Умение управлять ресурсами","Настойчивость в достижении цели"],
+      growth:["Мерить себя только достижениями","Жёсткость к слабым местам — своим и чужим","Трудоголизм за счёт остального"],
+      career:"Тебе подходят руководящие и предпринимательские роли — там, где виден результат в деньгах и масштабе; исполнительские позиции ощущаются тесными.",
+      love:"Ты показываешь любовь через обеспечение и защиту — но партнёру иногда важнее твоё время, а не твои достижения." },
+    9:{ title:"Странствующий мудрец", teaser:"Твоя история больше, чем ты один.",
+      essence:"Девятка завершает цикл — в ней есть сострадание и широкий взгляд на вещи. Ты остро чувствуешь чужую боль и часто помогаешь бескорыстно, даже когда это не просят. Люди приходят к тебе за смыслом, а не только за советом.",
+      strengths:["Широкий кругозор и мудрость","Способность к состраданию","Умение видеть общую картину"],
+      growth:["Забывать о собственных границах","Идеализм, который сталкивается с реальностью","Тянуть чужие проблемы на себе"],
+      career:"Тебе подходят профессии со смыслом и служением — благотворительность, наставничество, творчество с посланием; работа ради денег без смысла быстро выгорает.",
+      love:"Ты любишь широко, иногда слишком — партнёру важно напоминать тебе, что забота о себе не эгоизм." },
+    11:{ title:"Провидец", teaser:"Мастер-число: интуиция работает у тебя как инструмент.",
+      essence:"Одиннадцать — усиленная Двойка, число вдохновения и предчувствия. Ты улавливаешь то, что ещё не произошло, и способен вести за собой одной идеей, даже не имея формальной власти. Дар редкий — и требует бережного обращения с собой.",
+      strengths:["Обострённая интуиция","Вдохновляющее присутствие","Чувствительность к скрытым смыслам"],
+      growth:["Уязвимость к чужой тревоге","Перегрузка от количества впечатлений","Тревожность из-за высокой чувствительности"],
+      career:"Тебе подходит работа, где ценится видение и предчувствие — стратегия, творчество, психология; циничная бездушная среда истощает тебя быстрее, чем других.",
+      love:"Партнёру стоит знать: твоя чувствительность — не слабость, а инструмент, который нуждается в спокойной обстановке вокруг." },
+    22:{ title:"Архитектор", teaser:"Мастер-число: ты умеешь превращать мечту в чертёж.",
+      essence:"Двадцать два — усиленная Четвёрка, число больших построений. Тебе доступны и видение, и дисциплина, чтобы довести его до формы — редкое сочетание, которое остальные замечают издалека. Груз ответственности ты берёшь на себя сам, никто не просит.",
+      strengths:["Масштабное видение и практичность одновременно","Умение реализовать сложные замыслы","Терпение в долгую"],
+      growth:["Взваливать на себя слишком много","Трудно делегировать","Давление собственных высоких стандартов"],
+      career:"Тебе подходят проекты с реальным масштабом — от архитектуры в буквальном смысле до построения систем и организаций; мелкие задачи быстро становятся тесны.",
+      love:"Тебе важно, чтобы партнёр разделял масштаб твоих целей — а не только терпел твою занятость." },
+    33:{ title:"Наставник", teaser:"Мастер-число: забота становится твоим призванием.",
+      essence:"Тридцать три — усиленная Шестёрка, число безусловной заботы и учительства. Ты отдаёшь не по обязанности, а по сути, и это чувствуют все рядом, даже если ты об этом не говоришь.",
+      strengths:["Безусловная забота","Природный дар учить и поддерживать","Способность видеть потенциал в других"],
+      growth:["Забывать, что забота нужна и тебе","Растворяться в чужих нуждах","Трудно просить о помощи"],
+      career:"Тебе подходят профессии, где забота — это суть работы: образование, терапия, менторство; обезличенная работа без контакта с людьми ощущается пустой.",
+      love:"Тебе нужен партнёр, который заботится о тебе в ответ — иначе отношения превращаются в одностороннюю службу поддержки." }
+  };
+
+  var DAY_ADVICE = {
+    1:{ tone:"начать то, что давно откладывал(а)",
+      doList:["Начни то, что откладывал(а) — даже маленький первый шаг считается","Возьми инициативу там, где обычно ждёшь других","Действуй быстро, пока идея свежая"],
+      avoidList:["Не жди одобрения — сегодня это только тормозит","Не берись сразу за несколько дел — распылишься"],
+      watch:"Следи за нетерпением: если раздражают более медленные люди — это сигнал притормозить, а не подгонять их." },
+    2:{ tone:"услышать другого раньше, чем настоять на своём",
+      doList:["Выслушай кого-то до конца, не перебивая","Договорись о том, что давно откладывали вдвоём","Сделай первый шаг к примирению, если есть недосказанность"],
+      avoidList:["Не дави и не настаивай на своей правоте","Не избегай неудобного разговора — сегодня он пройдёт мягче обычного"],
+      watch:"Следи за желанием угодить всем сразу — сегодня легко забыть о собственных границах." },
+    3:{ tone:"говорить, показывать себя, создавать",
+      doList:["Скажи то, что обычно держишь при себе","Опубликуй, покажи, расскажи — сегодня тебя услышат","Позволь себе лёгкость и юмор даже в серьёзном деле"],
+      avoidList:["Не критикуй себя за несовершенство идеи — просто начни говорить","Не молчи, если хочется высказаться"],
+      watch:"Обрати внимание на разбросанность: если хватаешься за третье дело, не закончив первое — выбери одно." },
+    4:{ tone:"навести порядок и закрыть незавершённые дела",
+      doList:["Наведи порядок в одном конкретном месте — стол, документы, график","Доведи до конца рутинную задачу, которую откладывал(а)","Составь чёткий план на ближайшие дни"],
+      avoidList:["Не начинай ничего спонтанного и рискованного — не тот день","Не пропускай мелкие обязательства, сегодня они важны"],
+      watch:"Следи за излишней строгостью к себе — порядок не должен превращаться в самонаказание." },
+    5:{ tone:"выйти из привычной колеи",
+      doList:["Сделай что-то не по плану — смени маршрут, попробуй новое","Согласись на предложение, от которого раньше отказывался(ась)","Дай себе больше свободы в решениях"],
+      avoidList:["Не давай обещаний на долгий срок — настроение переменчиво","Не сиди весь день в четырёх стенах — телу нужно движение"],
+      watch:"Следи за импульсивностью в тратах и решениях — то, что кажется гениальным сейчас, стоит перепроверить завтра." },
+    6:{ tone:"позаботиться о доме и близких",
+      doList:["Позвони или напиши близкому человеку","Наведи уют дома — даже маленькое действие считается","Возьми на себя заботу о том, кто в этом нуждается"],
+      avoidList:["Не бери на себя чужую ответственность через силу","Не жертвуй временем ради того, кто не просил помощи"],
+      watch:"Проверь, не превращается ли забота в контроль — особенно если даёшь советы без запроса." },
+    7:{ tone:"побыть в тишине и подумать",
+      doList:["Выдели время в одиночестве без гаджетов","Разберись в вопросе, который требует анализа, а не эмоций","Доверься интуиции в спорной ситуации"],
+      avoidList:["Не соглашайся на шумные многолюдные планы, если не хочется","Не притворяйся, что всё понятно, если внутри есть сомнение"],
+      watch:"Следи за скрытностью: то, что держишь при себе слишком долго, копится в отстранённость." },
+    8:{ tone:"трезво посчитать ресурсы и договориться об условиях",
+      doList:["Пересчитай бюджет или обсуди условия сделки","Заяви свою цену — в переговорах, в проекте, в отношениях","Сделай шаг к цели, которая требует масштаба"],
+      avoidList:["Не соглашайся на условия ниже своей ценности","Не позволяй работе полностью вытеснить личное время"],
+      watch:"Обрати внимание, не начинаешь ли мерить день только результатом — отдых тоже часть эффективности." },
+    9:{ tone:"отпустить то, что уже сыграло свою роль",
+      doList:["Заверши то, что тянется слишком долго","Отпусти обиду или ситуацию, которая изжила себя","Помоги кому-то, не ожидая ничего взамен"],
+      avoidList:["Не начинай сегодня ничего нового — день на завершение, не на старт","Не забывай о своих границах, помогая другим"],
+      watch:"Следи за тенденцией растворяться в чужих проблемах — забота о себе сегодня не эгоизм, а необходимость." }
+  };
+
+  var MONTH_INSIGHT = {
+    1:{ vector:"Месяц про начало, а не про доведение до идеала. Всё, что запустишь сейчас — даже неуверенно — получит фору перед тем, что отложишь на потом. Инициатива работает в твою пользу почти во всех сферах.",
+      relationships:"Ты можешь оказаться тем, кто делает первый шаг — в знакомстве, в примирении, в признании.",
+      career:"Хорошее время предлагать идеи и брать проекты, где нужен лидер, а не исполнитель.",
+      health:"Энергии много — используй её на действие, а не на прокрастинацию перед стартом.",
+      growth:"Личный рост идёт через смелость, а не через подготовку — действие учит быстрее анализа." },
+    2:{ vector:"Месяц про отношения и союзы: почти любая тема легче решается вдвоём, чем в одиночку. Импульс месяца — договариваться, а не доказывать; слушать чаще, чем говорить.",
+      relationships:"Возможно сближение через честный разговор или совместный проект — но только если не давить.",
+      career:"Партнёрства и командная работа продуктивнее сольных инициатив.",
+      health:"Эмоциональное состояние сильно влияет на физическое — важно не копить обиды.",
+      growth:"Растёшь через умение слышать чужую точку зрения, даже когда не согласен(на)." },
+    3:{ vector:"Месяц про голос и видимость. То, что ты скажешь, покажешь или создашь сейчас, имеет больше шансов быть замеченным, чем обычно. Тема месяца — самовыражение без фильтров.",
+      relationships:"Лёгкость и юмор сближают быстрее серьёзных разговоров.",
+      career:"Публичность, презентации, контент — сейчас это работает на тебя сильнее обычного.",
+      health:"Энергия яркая, но нужно следить за режимом сна — легко перегореть в вихре активности.",
+      growth:"Растёшь через практику говорить о себе прямо, без извинений за то, что занимаешь место." },
+    4:{ vector:"Месяц про фундамент. Не время для рывков — время для системы, дисциплины и завершения незакрытых дел. То, что построишь методично сейчас, будет держаться долго.",
+      relationships:"Отношения крепнут через надёжность и совместные бытовые решения, а не через романтику.",
+      career:"Хорошее время для планирования, отчётности, наведения порядка в процессах.",
+      health:"Тело просит режима — сон, питание, регулярность важнее интенсивности.",
+      growth:"Растёшь через терпение — результат придёт не сразу, но придёт устойчиво." },
+    5:{ vector:"Месяц про перемены. Стабильность будет ощущаться теснее обычного, а любая новая возможность — заманчивее. Тема месяца — гибкость и готовность менять план на ходу.",
+      relationships:"Рутина в паре ощущается острее — стоит вносить разнообразие, а не терпеть молча.",
+      career:"Хорошее время для смены формата работы, а не для удержания старой схемы.",
+      health:"Энергия резкая, импульсивная — телу нужно движение и смена обстановки чаще обычного.",
+      growth:"Растёшь через отпускание контроля над тем, как именно всё должно быть." },
+    6:{ vector:"Месяц про близких и ответственность. Дом, семья, забота о тех, кто рядом, выходят на первый план сильнее личных амбиций. Тема месяца — устойчивость через отношения.",
+      relationships:"Особенно важны разговоры с семьёй — то, что откладывали, стоит обсудить сейчас.",
+      career:"Роли, где ты отвечаешь за команду или процесс, ощущаются естественнее, чем сольная гонка.",
+      health:"Забота о других не должна вытеснять заботу о себе — здесь легко выгореть незаметно.",
+      growth:"Растёшь через умение принимать помощь, а не только оказывать её." },
+    7:{ vector:"Месяц про паузу и осмысление. Внешняя активность может казаться менее привлекательной — и это нормально: месяц просит тишины, анализа, честного разговора с собой, а не с миром.",
+      relationships:"Нужно больше личного пространства — важно проговорить это близким, а не отдаляться молча.",
+      career:"Время для исследования, обучения, стратегии — не для публичных заявлений и суеты.",
+      health:"Внутреннее состояние важнее внешней активности — прислушайся к тому, что тело просит замедлиться.",
+      growth:"Растёшь через одиночество, которое выбираешь сам(а), а не через избегание людей." },
+    8:{ vector:"Месяц про масштаб и ресурсы. Деньги, статус, договорённости — темы, которые требуют трезвого взгляда и смелости заявить о своей цене. Тема месяца — управление, а не ожидание.",
+      relationships:"Практические вопросы — деньги, обязательства, планы — проверяют отношения на прочность.",
+      career:"Хорошее время для переговоров о зарплате, условиях, масштабировании проекта.",
+      health:"Собранность помогает держать фокус, но следи за трудоголизмом за счёт отдыха.",
+      growth:"Растёшь через ответственность за ресурсы — не только зарабатывать, но и распоряжаться с умом." },
+    9:{ vector:"Месяц про завершение цикла. Что-то естественным образом подходит к концу — проект, этап, а иногда и отношения в прежнем виде. Тема месяца — отпускать, а не удерживать.",
+      relationships:"Разговор о том, что назрело, освобождает больше, чем молчаливое терпение.",
+      career:"Время закрывать проекты и подводить итоги, а не начинать масштабно новое.",
+      health:"Энергия убывающая — тело просит меньше, а не больше; отдых сейчас не роскошь.",
+      growth:"Растёшь через принятие: не всё нужно спасать и продолжать — что-то честнее отпустить." }
+  };
+
+  var YEAR_INSIGHT = {
+    1:{ theme:"Год начала нового цикла — первого шага в направлении, которое раньше только обдумывал(а). Всё, что ты запустишь в первой трети года, получает особый импульс и легче приживается, чем то, что стартует позже.",
+      relationships:"Год может принести новое знакомство или новый уровень в существующих отношениях — через инициативу, а не ожидание.",
+      career:"Благоприятное время для смены роли, запуска своего дела или проекта, где нужен лидер.",
+      health:"Энергии много, но важно распределять её на дистанцию в 12 месяцев, а не сжечь в первом квартале.",
+      growth:"Год учит независимости — принимать решения самостоятельно, даже без гарантии одобрения со стороны.",
+      shadow:"Нетерпение и потребность делать всё в одиночку: риск оттолкнуть тех, кто мог бы помочь, и выгореть от гонки в одиночку.",
+      action:"Выбери одну главную цель года и назначь ей первый конкретный шаг в ближайшие две недели — не жди идеальных условий." },
+    2:{ theme:"Год союзов и терпения. Крупные результаты приходят не через рывок, а через партнёрство, доверие и умение подстроиться под чужой темп. Это год, когда «вместе» сильнее, чем «в одиночку».",
+      relationships:"Возможен качественный скачок в близких отношениях — но только через открытый разговор, а не молчаливые ожидания.",
+      career:"Партнёрства, команды, совместные проекты продуктивнее сольной карьеры в этом году.",
+      health:"Эмоциональное состояние сильно влияет на тело — стоит следить за тревожностью и учиться её проговаривать.",
+      growth:"Год учит дипломатии — как отстаивать себя, не разрушая связь с другим человеком.",
+      shadow:"Растворение в чужих ожиданиях и избегание конфликта там, где он необходим для честности.",
+      action:"Заведи привычку раз в месяц проговаривать с близким человеком то, что обычно держишь при себе." },
+    3:{ theme:"Год самовыражения и видимости. То, что ты создаёшь, говоришь и показываешь миру в этом году, имеет больше шансов быть замеченным, чем обычно. Это время выйти из тени собственной скромности.",
+      relationships:"Лёгкость и открытость притягивают новых людей — но глубина потребует отдельного намеренного усилия.",
+      career:"Хороший год для публичности: контент, презентации, смена роли на более заметную.",
+      health:"Энергия яркая, но рассеянная — следи за перегрузкой от количества активностей одновременно.",
+      growth:"Год учит завершать начатое — идей будет много, ценность в том, чтобы не бросать на середине.",
+      shadow:"Разбросанность и зависимость от чужого одобрения: легко потерять фокус, гоняясь за реакцией других.",
+      action:"Выбери один проект самовыражения — текст, канал, продукт, выступление — и доведи его до публикации в этом году." },
+    4:{ theme:"Год фундамента. Не время для рывков и авантюр — время строить систему, которая будет держать следующие годы. Медленный, но надёжный прогресс важнее эффектных скачков.",
+      relationships:"Отношения крепнут через совместные бытовые решения и надёжность, а не через яркие жесты.",
+      career:"Год благоприятен для наведения порядка в процессах, финансах, документах — база для будущего роста.",
+      health:"Тело просит режима: регулярность в сне и питании важнее интенсивных, но редких усилий.",
+      growth:"Год учит терпению — результат приходит не сразу, но то, что построено, не рассыпается.",
+      shadow:"Излишняя строгость к себе и другим, застревание в структуре даже тогда, когда её пора менять.",
+      action:"Выбери одну сферу — финансы, здоровье, дом — и выстрой в ней систему: чек-лист, бюджет, режим — в первом квартале года." },
+    5:{ theme:"Год перемен. Стабильность в прежнем виде будет ощущаться всё теснее, а новые возможности — всё заманчивее. Это год, когда план стоит держать не жёстко, а как черновик.",
+      relationships:"Рутина в паре ощущается острее обычного — год просит вносить разнообразие, а не терпеть молча.",
+      career:"Вероятна смена формата работы, переезд, новый проект — сопротивление переменам обойдётся дороже, чем движение с ними.",
+      health:"Энергия резкая, импульсивная — телу нужно движение, смена обстановки, новые физические форматы.",
+      growth:"Год учит отпускать контроль над тем, как именно всё должно происходить.",
+      shadow:"Импульсивные решения без учёта долгосрочных последствий и бегство от того, что требует терпения.",
+      action:"Запланируй хотя бы одну существенную перемену обстановки — поездку, переезд, смену формата работы — не откладывая её на «когда-нибудь»." },
+    6:{ theme:"Год ответственности и близких. Дом, семья, забота о тех, кто рядом, требуют больше внимания и дают больше отдачи, чем личные амбиции. Это год про то, на что ты готов(а) опереться и кого поддержать.",
+      relationships:"Вероятны важные семейные решения — переезд, свадьба, забота о близком человеке.",
+      career:"Роли с ответственностью за команду или процесс ощущаются естественнее, чем сольная гонка за результатом.",
+      health:"Забота о других не должна вытеснять заботу о себе — риск незаметного выгорания в этом году выше обычного.",
+      growth:"Год учит принимать помощь так же охотно, как её оказывать.",
+      shadow:"Гиперответственность за чужие проблемы и жертвенность без запроса со стороны других.",
+      action:"Раз в месяц сознательно выделяй время только для себя — без обязательств перед кем-либо ещё." },
+    7:{ theme:"Год паузы и осмысления. Внешняя активность отходит на второй план — год просит тишины, изучения, честного разговора с собой. Это не застой, а накопление внутреннего знания перед следующим витком.",
+      relationships:"Нужно больше личного пространства — важно проговорить это близким, а не отдаляться молча.",
+      career:"Хороший год для обучения, исследования, экспертизы — не для громких публичных заявлений.",
+      health:"Внутреннее состояние важнее внешней активности — тело и психика просят замедления и меньшего количества раздражителей.",
+      growth:"Год учит доверять внутреннему знанию больше, чем внешнему одобрению.",
+      shadow:"Отстранённость от близких и скрытность там, где стоило бы открыться.",
+      action:"Выдели регулярное время — неделя в квартал или день в месяц — полностью в одиночестве, без обязательств и гаджетов." },
+    8:{ theme:"Год масштаба. Деньги, статус, ресурсы, влияние — центральные темы года, которые требуют трезвого расчёта и смелости заявить о своей цене. Год вознаграждает управление, а не ожидание.",
+      relationships:"Практические вопросы — деньги, обязательства, совместные планы — проверяют отношения на прочность сильнее обычного.",
+      career:"Один из сильнейших годов для карьерного или финансового рывка — переговоров, повышения, масштабирования дела.",
+      health:"Собранность и фокус высоки, но год легко скатывается в трудоголизм за счёт отдыха и тела.",
+      growth:"Год учит ответственности за ресурсы — не только зарабатывать, но и распоряжаться с умом.",
+      shadow:"Измерение себя исключительно достижениями и жёсткость к слабым местам, своим и чужим.",
+      action:"В начале года пересчитай и зафиксируй финансовые цели на 12 месяцев — с конкретными цифрами, а не общими намерениями." },
+    9:{ theme:"Год завершения цикла. Что-то естественным образом подходит к концу — проект, этап жизни, а иногда и отношения в прежнем виде. Год просит отпускать, чтобы освободить место для нового цикла, который начнётся позже.",
+      relationships:"Возможны прощания или переход отношений в новое качество — сопротивление этому продлевает только боль.",
+      career:"Время завершать проекты и подводить итоги, а не запускать что-то масштабно новое — для этого больше подойдёт следующий год.",
+      health:"Энергия убывающая, философская — тело и психика просят меньше, а не больше; отдых не роскошь, а необходимость.",
+      growth:"Год учит принятию: не всё нужно спасать и продолжать — многое честнее отпустить.",
+      shadow:"Цепляние за то, что уже сыграло свою роль, и растворение в чужой боли в ущерб себе.",
+      action:"Составь список того, что пора завершить — проект, привычка, отношения, обязательство — и закрой хотя бы один пункт из него в первом полугодии." }
+  };
+
+  var MONTH_NAMES = ["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+
+  var MATRIX_LABELS = {1:"Характер",2:"Энергия",3:"Интерес",4:"Здоровье",5:"Логика",6:"Труд",7:"Удача",8:"Долг",9:"Память"};
+  var MATRIX_ORDER = [1,4,7,2,5,8,3,6,9];
+  var MATRIX_TEXT = {
+    1:{ "0":"мягкость без напора — тебе проще договориться, чем настоять", norma:"устойчивое, ровное чувство «я»", izbytok:"жёсткий, порой упрямый характер" },
+    2:{ "0":"энергию нужно беречь и восполнять осознанно", norma:"ровный запас сил на длинную дистанцию", izbytok:"избыток энергии, которой нужен выход" },
+    3:{ "0":"любопытство просыпается не сразу, зато надолго", norma:"здоровая тяга к новому", izbytok:"разбросанность между слишком многими интересами" },
+    4:{ "0":"здоровье требует внимания и профилактики", norma:"крепкая база, если не пренебрегать ей", izbytok:"хороший запас прочности организма" },
+    5:{ "0":"решения даются через чувство, а не расчёт", norma:"трезвый, практичный ум", izbytok:"склонность всё анализировать, порой в ущерб чувствам" },
+    6:{ "0":"работа даётся легче в команде, чем в одиночку", norma:"устойчивая способность трудиться", izbytok:"трудоголизм — умей вовремя остановиться" },
+    7:{ "0":"успех приходит через труд, а не везение", norma:"случай время от времени на твоей стороне", izbytok:"везение сопровождает почти во всём" },
+    8:{ "0":"чувство долга не давит — действуешь по желанию", norma:"здоровое чувство ответственности", izbytok:"гиперответственность, порой в ущерб себе" },
+    9:{ "0":"детали лучше записывать — память избирательна", norma:"надёжная память на важное", izbytok:"почти безупречная память на детали" }
+  };
+
+  function digitSum(str){
+    var s=0;
+    for(var i=0;i<str.length;i++){ var c=str.charCodeAt(i)-48; if(c>=0&&c<=9) s+=c; }
+    return s;
+  }
+  function reduceKeepMaster(n){
+    n = Math.abs(n);
+    while(n>9 && n!==11 && n!==22 && n!==33){
+      n = digitSum(String(n));
+    }
+    return n;
+  }
+  function reduceSimple(n){
+    n = Math.abs(n);
+    while(n>9){ n = digitSum(String(n)); }
+    return n;
+  }
+
+  function lifePathNumber(day, month, year){
+    var d = reduceKeepMaster(digitSum(String(day)));
+    var m = reduceKeepMaster(digitSum(String(month)));
+    var y = reduceKeepMaster(digitSum(String(year)));
+    return reduceKeepMaster(d+m+y);
+  }
+
+  function buildMatrix(day, month, year){
+    var dd = String(day).padStart(2,"0");
+    var mm = String(month).padStart(2,"0");
+    var yyyy = String(year).padStart(4,"0");
+    var dateStr = dd+mm+yyyy;
+    var digits = dateStr.split("").map(Number);
+    var a = digitSum(dateStr);
+    var b = digitSum(String(a));
+    var c = a - 2*digits[0];
+    var d = digitSum(String(Math.abs(c)));
+    var all = digits.concat(
+      String(Math.abs(a)).split("").map(Number),
+      String(Math.abs(b)).split("").map(Number),
+      String(Math.abs(c)).split("").map(Number),
+      String(Math.abs(d)).split("").map(Number)
+    );
+    var counts = {};
+    for(var i=1;i<=9;i++) counts[i]=0;
+    all.forEach(function(dig){ if(dig>=1 && dig<=9) counts[dig]++; });
+    return counts;
+  }
+
+  function tierKey(count){
+    if(count===0) return "0";
+    if(count<=3) return "norma";
+    return "izbytok";
+  }
+  function sphereListHTML(a){
+    return "<li><strong>Отношения.</strong> " + a.relationships + "</li>" +
+           "<li><strong>Работа и деньги.</strong> " + a.career + "</li>" +
+           "<li><strong>Здоровье и энергия.</strong> " + a.health + "</li>" +
+           "<li><strong>Личный рост.</strong> " + a.growth + "</li>";
+  }
+  function spherePlainText(a){
+    return "Отношения: " + a.relationships + " Работа и деньги: " + a.career + " Здоровье: " + a.health + " Рост: " + a.growth;
+  }
+  function computeMonthDays(personalMonth, year, monthIndex0){
+    var daysInMonth = new Date(year, monthIndex0+1, 0).getDate();
+    var peak = [], risk = [];
+    for(var day=1; day<=daysInMonth; day++){
+      var n = reduceSimple(personalMonth + day);
+      if(n===1 || n===8) peak.push(day);
+      else if(n===7 || n===9) risk.push(day);
+    }
+    return { peak:peak, risk:risk };
+  }
+  function computeYearMonths(personalYear){
+    var active = [], quiet = [];
+    for(var m=1; m<=12; m++){
+      var n = reduceSimple(personalYear + m);
+      if(n===1 || n===3 || n===5 || n===8) active.push(MONTH_NAMES[m-1]);
+      else quiet.push(MONTH_NAMES[m-1]);
+    }
+    return { active:active, quiet:quiet };
+  }
+
+  var form = document.getElementById("dateForm");
+  var errorEl = document.getElementById("formError");
+  var resultSection = document.getElementById("result");
+  var paywall = document.getElementById("paywall");
+  var fullContent = document.getElementById("fullContent");
+  var unlockBtn = document.getElementById("unlockBtn");
+  var copyBtn = document.getElementById("copyBtn");
+  var downloadBtn = document.getElementById("downloadBtn");
+  var emailBtn = document.getElementById("emailBtn");
+
+  var reportText = "";
+  var reportFilename = "put-razbor.txt";
+
+  form.addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var dd = parseInt(document.getElementById("dd").value, 10);
+    var mm = parseInt(document.getElementById("mm").value, 10);
+    var yyyy = parseInt(document.getElementById("yyyy").value, 10);
+
+    var thisYear = new Date().getFullYear();
+    if(!dd || !mm || !yyyy || dd<1 || dd>31 || mm<1 || mm>12 || yyyy<1900 || yyyy>thisYear){
+      errorEl.textContent = "Проверь дату: день 1–31, месяц 1–12, год 1900–" + thisYear + ".";
+      errorEl.hidden = false;
+      resultSection.hidden = true;
+      return;
+    }
+    errorEl.hidden = true;
+
+    var lifePath = lifePathNumber(dd, mm, yyyy);
+    var info = LIFE_PATH[lifePath];
+
+    document.getElementById("lifePathNumber").textContent = lifePath;
+    document.getElementById("lifePathTitle").textContent = info.title;
+    document.getElementById("lifePathTeaser").textContent = info.teaser;
+    document.getElementById("characterText").textContent = info.essence;
+
+    var strengthsList = document.getElementById("strengthsList");
+    var growthList = document.getElementById("growthList");
+    strengthsList.innerHTML = info.strengths.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+    growthList.innerHTML = info.growth.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+    document.getElementById("careerText").textContent = info.career;
+    document.getElementById("loveText").textContent = info.love;
+
+    var today = new Date();
+    var personalYear = reduceSimple(dd + mm + today.getFullYear());
+    var personalMonth = reduceSimple(personalYear + (today.getMonth()+1));
+    var personalDay = reduceSimple(personalMonth + today.getDate());
+
+    var day = DAY_ADVICE[personalDay];
+    document.getElementById("dayNumber").textContent = personalDay;
+    document.getElementById("dayText").textContent = "Сегодня преобладает энергия числа " + personalDay + ". Стоит " + day.tone + ".";
+    document.getElementById("dayDo").innerHTML = day.doList.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+    document.getElementById("dayAvoid").innerHTML = day.avoidList.map(function(s){ return "<li>"+s+"</li>"; }).join("");
+    document.getElementById("dayWatch").textContent = "На что обратить внимание: " + day.watch;
+
+    var month = MONTH_INSIGHT[personalMonth];
+    var monthDays = computeMonthDays(personalMonth, yyyy, today.getMonth());
+    document.getElementById("monthNumber").textContent = personalMonth;
+    document.getElementById("monthVector").textContent = month.vector;
+    document.getElementById("monthSpheres").innerHTML = sphereListHTML(month);
+    document.getElementById("monthPeakDays").textContent = monthDays.peak.length ? monthDays.peak.join(", ") : "не выражены в этом месяце";
+    document.getElementById("monthRiskDays").textContent = monthDays.risk.length ? monthDays.risk.join(", ") : "не выражены в этом месяце";
+
+    var year = YEAR_INSIGHT[personalYear];
+    var yearMonths = computeYearMonths(personalYear);
+    document.getElementById("yearNumber").textContent = personalYear;
+    document.getElementById("yearTheme").textContent = year.theme;
+    document.getElementById("yearSpheres").innerHTML = sphereListHTML(year);
+    document.getElementById("yearActiveMonths").textContent = yearMonths.active.join(", ");
+    document.getElementById("yearQuietMonths").textContent = yearMonths.quiet.join(", ");
+    document.getElementById("yearShadow").textContent = "Теневая сторона числа: " + year.shadow;
+    document.getElementById("yearAction").textContent = "Рекомендация года: " + year.action;
+
+    var matrix = buildMatrix(dd, mm, yyyy);
+    var grid = document.getElementById("matrixGrid");
+    grid.innerHTML = "";
+    var dominantDigit = MATRIX_ORDER[0];
+    MATRIX_ORDER.forEach(function(digit){
+      if(matrix[digit] > matrix[dominantDigit]) dominantDigit = digit;
+    });
+    MATRIX_ORDER.forEach(function(digit){
+      var count = matrix[digit];
+      var key = tierKey(count);
+      var filled = Math.min(count, 5);
+      var dots = "";
+      for(var i=0;i<5;i++){ dots += '<span class="dot' + (i<filled ? ' filled' : '') + '"></span>'; }
+      var cell = document.createElement("div");
+      cell.className = "matrix-cell";
+      cell.title = "Цифра " + digit + " встречается " + count + " раз(а)";
+      cell.innerHTML =
+        '<span class="matrix-label">' + MATRIX_LABELS[digit] + '</span>' +
+        '<span class="dot-row">' + dots + '</span>' +
+        '<span class="matrix-phrase">' + MATRIX_TEXT[digit][key] + '</span>';
+      grid.appendChild(cell);
+    });
+
+    document.getElementById("ppLifePath").textContent = lifePath;
+    document.getElementById("ppYear").textContent = personalYear;
+    document.getElementById("ppDominant").textContent = MATRIX_LABELS[dominantDigit];
+
+    reportFilename = "put-razbor-" + String(dd).padStart(2,"0") + "-" + String(mm).padStart(2,"0") + "-" + yyyy + ".txt";
+    reportText = "ПУТЬ — нумерологический разбор\n" +
+      "Дата: " + String(dd).padStart(2,"0") + "." + String(mm).padStart(2,"0") + "." + yyyy + "\n\n" +
+      "Число жизненного пути: " + lifePath + " (" + info.title + ")\n" + info.essence + "\n\n" +
+      "Сильные стороны: " + info.strengths.join(", ") + "\n" +
+      "Точки роста: " + info.growth.join(", ") + "\n\n" +
+      "Работа и деньги: " + info.career + "\n" +
+      "Отношения: " + info.love + "\n\n" +
+      "СЕГОДНЯ (" + personalDay + "): стоит " + day.tone + ".\n" +
+      "Делать: " + day.doList.join("; ") + "\n" +
+      "Не делать: " + day.avoidList.join("; ") + "\n" +
+      "Внимание: " + day.watch + "\n\n" +
+      "ЭТОТ МЕСЯЦ (" + personalMonth + "): " + month.vector + "\n" + spherePlainText(month) + "\n" +
+      "Пиковые дни: " + (monthDays.peak.join(", ") || "—") + ". Дни риска: " + (monthDays.risk.join(", ") || "—") + "\n\n" +
+      "ЭТОТ ГОД (" + personalYear + "): " + year.theme + "\n" + spherePlainText(year) + "\n" +
+      "Активные месяцы: " + yearMonths.active.join(", ") + ". Тихие месяцы: " + yearMonths.quiet.join(", ") + "\n" +
+      "Теневая сторона: " + year.shadow + "\n" +
+      "Рекомендация года: " + year.action + "\n\n" +
+      "Матрица судьбы: " + MATRIX_ORDER.map(function(digit){ return MATRIX_LABELS[digit] + " " + matrix[digit]; }).join(", ");
+
+    var mandalaNumber = document.getElementById("mandalaNumber");
+    mandalaNumber.textContent = lifePath;
+    mandalaNumber.classList.add("visible");
+
+    resultSection.hidden = false;
+    paywall.hidden = false;
+    fullContent.hidden = true;
+    unlockBtn.disabled = false;
+    unlockBtn.textContent = "Открыть за 49 ₽";
+    resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
+  });
+
+  unlockBtn.addEventListener("click", function(){
+    unlockBtn.disabled = true;
+    unlockBtn.textContent = "Оплата...";
+    setTimeout(function(){
+      paywall.hidden = true;
+      fullContent.hidden = false;
+    }, 700);
+  });
+
+  copyBtn.addEventListener("click", function(){
+    function done(ok){
+      copyBtn.textContent = ok ? "Скопировано ✓" : "Не удалось скопировать";
+      setTimeout(function(){ copyBtn.textContent = "Скопировать разбор"; }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(reportText).then(function(){ done(true); }).catch(function(){ done(false); });
+    } else {
+      done(false);
+    }
+  });
+
+  function buildPrintHTML(){
+    var lines = reportText.split("\n");
+    var title = lines[0];
+    var rest = lines.slice(1).join("\n").replace(/^\n+/, "");
+    var esc = document.createElement("div");
+    esc.textContent = rest;
+    var escaped = esc.innerHTML;
+    [
+      "Число жизненного пути:","Сильные стороны:","Точки роста:",
+      "Работа и деньги:","Отношения:","СЕГОДНЯ","ЭТОТ МЕСЯЦ","ЭТОТ ГОД","Матрица судьбы:"
+    ].forEach(function(label){
+      escaped = escaped.split(label).join("<strong>" + label + "</strong>");
+    });
+    return '<div class="print-doc">' +
+      "<h1>" + title + "</h1>" +
+      '<div class="print-body">' + escaped + "</div>" +
+      '<p class="print-footer">Прототип интерфейса. Расчёты основаны на классических нумерологических формулах и не являются предсказанием будущего.</p>' +
+      "</div>";
+  }
+
+  downloadBtn.addEventListener("click", function(){
+    if(!reportText) return;
+    document.getElementById("printArea").innerHTML = buildPrintHTML();
+    var originalTitle = document.title;
+    document.title = reportFilename.replace(/\.txt$/, "");
+    window.print();
+    setTimeout(function(){ document.title = originalTitle; }, 1000);
+  });
+
+  emailBtn.addEventListener("click", function(){
+    var subject = "Твой нумерологический разбор — ПУТЬ";
+    var body = reportText;
+    var limit = 1500;
+    if(body.length > limit){
+      body = body.slice(0, limit) + "\n\n… (полный текст — через «Скачать» или «Скопировать разбор»)";
+    }
+    var mailtoUrl = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    window.location.href = mailtoUrl;
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var toggle = document.getElementById("themeToggle");
+  var glyph = document.getElementById("themeGlyph");
+
+  function currentTheme(){
+    var attr = root.getAttribute("data-theme");
+    if(attr === "dark" || attr === "light") return attr;
+    return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  function paintToggle(){
+    var t = currentTheme();
+    glyph.className = "glyph " + (t === "dark" ? "sun" : "moon");
+    toggle.setAttribute("aria-label", t === "dark" ? "Включить светлую тему" : "Включить тёмную тему");
+  }
+  (function initTheme(){
+    var stored = null;
+    try{ stored = localStorage.getItem("put-theme"); }catch(e){}
+    if(stored === "dark" || stored === "light") root.setAttribute("data-theme", stored);
+    paintToggle();
+  })();
+  toggle.addEventListener("click", function(){
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try{ localStorage.setItem("put-theme", next); }catch(e){}
+    paintToggle();
+    refreshColors();
+  });
+
+  var canvas = document.getElementById("bgCanvas");
+  var ctx = canvas.getContext("2d");
+  var reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var stars = [];
+  var featureStars = [];
+  var FEATURE_POS = [
+    {x:0.14, y:0.16}, {x:0.84, y:0.10}, {x:0.92, y:0.62},
+    {x:0.08, y:0.72}, {x:0.5, y:0.06}, {x:0.32, y:0.88}
+  ];
+  var starRgb = "233,194,102";
+  var lineRgb = "237,231,214";
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function refreshColors(){
+    var styles = getComputedStyle(root);
+    starRgb = styles.getPropertyValue("--star-rgb").trim() || starRgb;
+    lineRgb = styles.getPropertyValue("--star-line-rgb").trim() || lineRgb;
+    if(reducedMotion) drawFrame(0);
+  }
+
+  function resize(){
+    var w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var count = Math.round((w*h)/18000);
+    stars = [];
+    for(var i=0;i<count;i++){
+      stars.push({
+        x: Math.random()*w, y: Math.random()*h,
+        r: Math.random()*1.3+0.4,
+        phase: Math.random()*Math.PI*2,
+        speed: 0.3+Math.random()*0.5
+      });
+    }
+    featureStars = FEATURE_POS.map(function(p){
+      return { x:p.x*w, y:p.y*h, r:2.2+Math.random()*0.8, phase:Math.random()*Math.PI*2, speed:0.15+Math.random()*0.15 };
+    });
+    refreshColors();
+    if(reducedMotion) drawFrame(0);
+  }
+
+  function drawFrame(t){
+    var w = window.innerWidth, h = window.innerHeight;
+    ctx.clearRect(0,0,w,h);
+    for(var i=0;i<stars.length;i++){
+      for(var j=i+1;j<stars.length;j++){
+        var dx = stars[i].x-stars[j].x, dy = stars[i].y-stars[j].y;
+        var d = Math.sqrt(dx*dx+dy*dy);
+        if(d<100){
+          ctx.strokeStyle = "rgba("+lineRgb+","+(0.08*(1-d/100))+")";
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(stars[i].x,stars[i].y); ctx.lineTo(stars[j].x,stars[j].y); ctx.stroke();
+        }
+      }
+    }
+    stars.forEach(function(s){
+      var tw = reducedMotion ? 1 : (0.5 + 0.5*Math.sin((t/1000)*s.speed + s.phase));
+      ctx.beginPath();
+      ctx.fillStyle = "rgba("+starRgb+","+(0.55*tw+0.12)+")";
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    featureStars.forEach(function(s){
+      var tw = reducedMotion ? 1 : (0.6 + 0.4*Math.sin((t/1000)*s.speed + s.phase));
+      var glow = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,26);
+      glow.addColorStop(0, "rgba("+starRgb+","+(0.30*tw)+")");
+      glow.addColorStop(1, "rgba("+starRgb+",0)");
+      ctx.beginPath();
+      ctx.fillStyle = glow;
+      ctx.arc(s.x,s.y,26,0,Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = "rgba("+starRgb+","+(0.75*tw+0.2)+")";
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    if(!reducedMotion) requestAnimationFrame(drawFrame);
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+  requestAnimationFrame(drawFrame);
+})();
+</script>
