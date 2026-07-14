@@ -307,8 +307,14 @@
   .paywall-list li::before{
     content:"·"; position:absolute; left:4px; top:-2px; color:var(--gold); font-size:1.4rem;
   }
+  .consent-row{
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:16px;
+    font-size:0.84rem; color:var(--text-muted); cursor:pointer; line-height:1.4;
+  }
+  .consent-row input{ margin-top:3px; flex:none; accent-color:var(--gold); width:16px; height:16px; }
+  .consent-row a{ color:var(--gold); }
   .btn-unlock{ width:100%; padding:14px; font-size:0.98rem; }
-  .btn-unlock[disabled]{ opacity:0.6; cursor:progress; }
+  .btn-unlock[disabled]{ opacity:0.5; cursor:not-allowed; }
 
   .badge-open{
     display:inline-flex; align-items:center; gap:6px; font-size:0.66rem; letter-spacing:0.14em;
@@ -541,7 +547,11 @@
           <li>Матрица судьбы — 9 черт характера с расшифровкой каждой</li>
           <li>Персональная рекомендация дня</li>
         </ul>
-        <button class="btn-primary btn-unlock" id="unlockBtn">Открыть за 49 ₽</button>
+        <label class="consent-row">
+          <input type="checkbox" id="consentCheckbox">
+          <span>Согласен(на) с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и <a href="offer.html" target="_blank" rel="noopener">пользовательским соглашением</a></span>
+        </label>
+        <button class="btn-primary btn-unlock" id="unlockBtn" disabled>Открыть за 49 ₽</button>
       </div>
 
       <div class="full framed" id="fullContent" hidden>
@@ -650,7 +660,7 @@
           <div class="matrix-grid" id="matrixGrid"></div>
         </article>
 
-        <div class="unlock-note">Приём оплаты и отправка на почту сейчас в разработке: разбор открывается сразу, без реального списания средств.</div>
+        <div class="unlock-note">Тестовый режим оплаты: разбор открывается сразу, реального списания средств не происходит.</div>
 
         <div class="share-row">
           <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
@@ -661,14 +671,14 @@
           <input type="email" id="emailInput" placeholder="твой email" autocomplete="email">
           <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
         </div>
-        <p class="privacy-note privacy-note-center">Отправка на почту пока в разработке: email никуда не уходит и не сохраняется.</p>
+        <p class="privacy-note privacy-note-center">Тестовый режим отправки: email не сохраняется и не используется для реальной рассылки.</p>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <p>«Путь» — развлекательный проект на основе классических нумерологических формул (число жизненного пути, квадрат Пифагора). Это не гадание, не предсказание судьбы и не замена профессиональной психологической, медицинской или финансовой консультации: воспринимай разбор как повод задуматься, а не как инструкцию к действию.</p>
-    <p>Все расчёты происходят локально, в твоём браузере — дата рождения никуда не отправляется и нигде не сохраняется. Приём оплаты и отправка на почту сейчас в разработке: результат открывается сразу, без реального списания средств, а введённый email никуда не уходит и не сохраняется.</p>
+    <p>Все расчёты происходят локально, в твоём браузере — дата рождения никуда не отправляется и нигде не сохраняется. Оплата и отправка на почту работают в тестовом режиме: результат открывается сразу, без реального списания средств, а введённый email не сохраняется и не используется для реальной рассылки.</p>
     <p class="footer-links"><a href="privacy.html">Политика конфиденциальности</a> · <a href="offer.html">Пользовательское соглашение</a></p>
   </footer>
 </div>
@@ -1006,6 +1016,7 @@
   var paywall = document.getElementById("paywall");
   var fullContent = document.getElementById("fullContent");
   var unlockBtn = document.getElementById("unlockBtn");
+  var consentCheckbox = document.getElementById("consentCheckbox");
   var copyBtn = document.getElementById("copyBtn");
   var downloadBtn = document.getElementById("downloadBtn");
   var emailBtn = document.getElementById("emailBtn");
@@ -1139,12 +1150,17 @@
     resultSection.hidden = false;
     paywall.hidden = false;
     fullContent.hidden = true;
-    unlockBtn.disabled = false;
+    unlockBtn.disabled = !consentCheckbox.checked;
     unlockBtn.textContent = "Открыть за 49 ₽";
     resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
   });
 
+  consentCheckbox.addEventListener("change", function(){
+    unlockBtn.disabled = !consentCheckbox.checked;
+  });
+
   unlockBtn.addEventListener("click", function(){
+    if(!consentCheckbox.checked) return;
     unlockBtn.disabled = true;
     unlockBtn.textContent = "Оплата...";
     setTimeout(function(){
