@@ -234,6 +234,8 @@
   .btn-secondary:hover{ border-color:var(--gold); }
 
   .error{ color:var(--wine); font-size:0.88rem; margin-top:14px; }
+  .privacy-note{ font-size:0.76rem; color:var(--text-muted); margin-top:12px; max-width:46ch; }
+  .privacy-note-center{ text-align:center; max-width:none; margin-top:10px; }
 
   .result{ padding-top:48px; }
 
@@ -487,6 +489,7 @@
         <button type="submit" class="btn-primary">Рассчитать</button>
       </form>
       <p class="error" id="formError" hidden></p>
+      <p class="privacy-note">Дата обрабатывается только в твоём браузере — никуда не отправляется и нигде не сохраняется.</p>
 
       <div class="steps">
         <div class="step"><span class="step-num">01</span><span class="step-text">Вводишь дату рождения</span></div>
@@ -637,12 +640,14 @@
           <input type="email" id="emailInput" placeholder="твой email" autocomplete="email">
           <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
         </div>
+        <p class="privacy-note privacy-note-center">Email нужен только для этой демонстрации, никуда не отправляется и не сохраняется.</p>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <p>Прототип интерфейса. Расчёты основаны на классических нумерологических формулах (число жизненного пути, квадрат Пифагора) и не являются предсказанием будущего.</p>
+    <p>«Путь» — развлекательный проект на основе классических нумерологических формул (число жизненного пути, квадрат Пифагора). Это не гадание, не предсказание судьбы и не замена профессиональной психологической, медицинской или финансовой консультации: воспринимай разбор как повод задуматься, а не как инструкцию к действию.</p>
+    <p>Все расчёты происходят локально, в твоём браузере — дата рождения никуда не отправляется и нигде не сохраняется. Email, введённый для отправки разбора, в этом прототипе тоже никуда не уходит и не сохраняется: отправка эмулируется, чтобы показать интерфейс целиком.</p>
   </footer>
 </div>
 
