@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vereschagindv-cloud.github.io/put-numerology/sitemap.xml

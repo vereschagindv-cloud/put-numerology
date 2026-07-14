@@ -1,6 +1,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Путь — число жизненного пути</title>
+<title>Путь — число жизненного пути и матрица судьбы по дате рождения</title>
+<meta name="description" content="Узнай число жизненного пути и матрицу судьбы по дате рождения: характер, сильные стороны, прогноз на день, месяц и год. Полный разбор — 49 ₽.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://vereschagindv-cloud.github.io/put-numerology/">
+<meta name="theme-color" content="#170F22">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Путь — число жизненного пути и матрица судьбы">
+<meta property="og:description" content="Узнай число жизненного пути и матрицу судьбы по дате рождения: характер, сильные стороны, прогноз на день, месяц и год.">
+<meta property="og:url" content="https://vereschagindv-cloud.github.io/put-numerology/">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Путь — число жизненного пути и матрица судьбы">
+<meta name="twitter:description" content="Узнай число жизненного пути и матрицу судьбы по дате рождения.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --bg:#170F22;
@@ -421,6 +440,9 @@
     margin-top:56px; padding-top:20px; border-top:1px solid var(--line);
     font-size:0.78rem; color:var(--text-muted); max-width:52ch;
   }
+  .footer-links{ margin-top:16px; }
+  .footer-links a{ color:var(--text-muted); text-decoration:underline; text-underline-offset:2px; }
+  .footer-links a:hover{ color:var(--gold); }
 
   @media (max-width:560px){
     .trait-grid, .sphere-grid{ grid-template-columns:1fr; }
@@ -629,7 +651,7 @@
           <div class="matrix-grid" id="matrixGrid"></div>
         </article>
 
-        <div class="unlock-note">Демо-режим: оплата, а также отправка на почту — эмулируются, чтобы можно было оценить интерфейс целиком.</div>
+        <div class="unlock-note">Приём оплаты и отправка на почту сейчас в разработке: разбор открывается сразу, без реального списания средств.</div>
 
         <div class="share-row">
           <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
@@ -640,14 +662,15 @@
           <input type="email" id="emailInput" placeholder="твой email" autocomplete="email">
           <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
         </div>
-        <p class="privacy-note privacy-note-center">Email нужен только для этой демонстрации, никуда не отправляется и не сохраняется.</p>
+        <p class="privacy-note privacy-note-center">Отправка на почту пока в разработке: email никуда не уходит и не сохраняется.</p>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <p>«Путь» — развлекательный проект на основе классических нумерологических формул (число жизненного пути, квадрат Пифагора). Это не гадание, не предсказание судьбы и не замена профессиональной психологической, медицинской или финансовой консультации: воспринимай разбор как повод задуматься, а не как инструкцию к действию.</p>
-    <p>Все расчёты происходят локально, в твоём браузере — дата рождения никуда не отправляется и нигде не сохраняется. Email, введённый для отправки разбора, в этом прототипе тоже никуда не уходит и не сохраняется: отправка эмулируется, чтобы показать интерфейс целиком.</p>
+    <p>Все расчёты происходят локально, в твоём браузере — дата рождения никуда не отправляется и нигде не сохраняется. Приём оплаты и отправка на почту сейчас в разработке: результат открывается сразу, без реального списания средств, а введённый email никуда не уходит и не сохраняется.</p>
+    <p class="footer-links"><a href="privacy.html">Политика конфиденциальности</a> · <a href="offer.html">Пользовательское соглашение</a></p>
   </footer>
 </div>
 
@@ -1342,9 +1365,9 @@
     y += paraGap;
     ctx.font = FOOTER_FONT;
     ctx.fillStyle = "#666666";
-    ctx.fillText("Прототип интерфейса. Расчёты основаны на классических нумерологических", marginPt, y);
+    ctx.fillText("Расчёты основаны на классических нумерологических формулах и не являются", marginPt, y);
     y += footerLineHeight;
-    ctx.fillText("формулах и не являются предсказанием будущего.", marginPt, y);
+    ctx.fillText("гаданием или предсказанием будущего.", marginPt, y);
 
     var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     var rgba = imgData.data;
