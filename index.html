@@ -197,8 +197,9 @@
   }
   .wordmark{
     font-family:var(--serif); font-size:1.8rem; letter-spacing:0.14em; font-style:italic;
-    color:var(--text);
+    color:var(--text); text-decoration:none; cursor:pointer;
   }
+  .wordmark:hover{ color:var(--gold); }
   .wordmark span{ color:var(--gold); font-style:normal; }
   .tagline{
     font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted);
@@ -490,7 +491,7 @@
 
 <div class="page">
   <header class="topbar">
-    <div class="wordmark">ПУТЬ<span>·</span></div>
+    <a class="wordmark" href="index.html">ПУТЬ<span>·</span></a>
     <div class="tagline">нумерология по дате рождения</div>
   </header>
 
