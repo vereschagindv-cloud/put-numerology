@@ -1006,26 +1006,13 @@
   var paywall = document.getElementById("paywall");
   var fullContent = document.getElementById("fullContent");
   var unlockBtn = document.getElementById("unlockBtn");
+  var consentCheckbox = document.getElementById("consentCheckbox");
   var copyBtn = document.getElementById("copyBtn");
   var downloadBtn = document.getElementById("downloadBtn");
   var reportText = "";
   var reportFilename = "put-razbor.pdf";
 
-  form.addEventListener("submit", function(ev){
-    ev.preventDefault();
-    var dd = parseInt(document.getElementById("dd").value, 10);
-    var mm = parseInt(document.getElementById("mm").value, 10);
-    var yyyy = parseInt(document.getElementById("yyyy").value, 10);
-
-    var thisYear = new Date().getFullYear();
-    if(!dd || !mm || !yyyy || dd<1 || dd>31 || mm<1 || mm>12 || yyyy<1900 || yyyy>thisYear){
-      errorEl.textContent = "Проверь дату: день 1–31, месяц 1–12, год 1900–" + thisYear + ".";
-      errorEl.hidden = false;
-      resultSection.hidden = true;
-      return;
-    }
-    errorEl.hidden = true;
-
+  function renderReport(dd, mm, yyyy){
     var lifePath = lifePathNumber(dd, mm, yyyy);
     var info = LIFE_PATH[lifePath];
 
@@ -1132,14 +1119,96 @@
     var mandalaNumber = document.getElementById("mandalaNumber");
     mandalaNumber.textContent = lifePath;
     mandalaNumber.classList.add("visible");
+  }
+
+  form.addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var dd = parseInt(document.getElementById("dd").value, 10);
+    var mm = parseInt(document.getElementById("mm").value, 10);
+    var yyyy = parseInt(document.getElementById("yyyy").value, 10);
+
+    var thisYear = new Date().getFullYear();
+    if(!dd || !mm || !yyyy || dd<1 || dd>31 || mm<1 || mm>12 || yyyy<1900 || yyyy>thisYear){
+      errorEl.textContent = "Проверь дату: день 1–31, месяц 1–12, год 1900–" + thisYear + ".";
+      errorEl.hidden = false;
+      resultSection.hidden = true;
+      return;
+    }
+    errorEl.hidden = true;
+
+    renderReport(dd, mm, yyyy);
 
     resultSection.hidden = false;
     paywall.hidden = false;
     fullContent.hidden = true;
-    unlockBtn.disabled = true; // приём оплаты временно отключён — раздел ниже нельзя открыть
+    unlockBtn.disabled = !consentCheckbox.checked;
     unlockBtn.textContent = "Открыть за 99 ₽";
     resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
   });
+
+  consentCheckbox.addEventListener("change", function(){
+    unlockBtn.disabled = !consentCheckbox.checked;
+  });
+
+  var PAYMENTS_API = "https://put-numerology-payments.PLACEHOLDER.workers.dev";
+
+  unlockBtn.addEventListener("click", function(){
+    if(!consentCheckbox.checked) return;
+    var dd = document.getElementById("dd").value;
+    var mm = document.getElementById("mm").value;
+    var yyyy = document.getElementById("yyyy").value;
+    try{
+      localStorage.setItem("put_pending_dob", JSON.stringify({ dd:dd, mm:mm, yyyy:yyyy }));
+    }catch(e){}
+
+    var originalLabel = unlockBtn.textContent;
+    unlockBtn.disabled = true;
+    unlockBtn.textContent = "Переходим к оплате...";
+
+    fetch(PAYMENTS_API + "/pay")
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.payUrl) throw new Error("no payUrl");
+        window.location.href = data.payUrl;
+      })
+      .catch(function(){
+        unlockBtn.disabled = false;
+        unlockBtn.textContent = originalLabel;
+        errorEl.textContent = "Не удалось начать оплату. Попробуй ещё раз.";
+        errorEl.hidden = false;
+      });
+  });
+
+  (function resumeAfterPayment(){
+    var params = new URLSearchParams(window.location.search);
+    var invId = params.get("invId");
+    var status = params.get("status");
+    if(!invId) return;
+
+    window.history.replaceState({}, "", window.location.pathname);
+    if(status !== "success") return;
+
+    fetch(PAYMENTS_API + "/check?invId=" + encodeURIComponent(invId))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.paid) return;
+        var saved = null;
+        try{ saved = JSON.parse(localStorage.getItem("put_pending_dob") || "null"); }catch(e){}
+        if(!saved) return;
+
+        document.getElementById("dd").value = saved.dd;
+        document.getElementById("mm").value = saved.mm;
+        document.getElementById("yyyy").value = saved.yyyy;
+
+        renderReport(parseInt(saved.dd,10), parseInt(saved.mm,10), parseInt(saved.yyyy,10));
+        resultSection.hidden = false;
+        paywall.hidden = true;
+        fullContent.hidden = false;
+        resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
+        try{ localStorage.removeItem("put_pending_dob"); }catch(e){}
+      })
+      .catch(function(){});
+  })();
 
   copyBtn.addEventListener("click", function(){
     function done(ok){

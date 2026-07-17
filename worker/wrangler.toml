@@ -1,0 +1,14 @@
+name = "put-numerology-payments"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Created via: npx wrangler kv namespace create PAYMENTS
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "PAYMENTS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Secrets (never stored here) — set via:
+#   npx wrangler secret put ROBOKASSA_LOGIN
+#   npx wrangler secret put ROBOKASSA_PASSWORD1
+#   npx wrangler secret put ROBOKASSA_PASSWORD2
