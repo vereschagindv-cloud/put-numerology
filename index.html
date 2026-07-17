@@ -435,13 +435,6 @@
   .matrix-phrase{ font-size:0.76rem; color:var(--text-muted); line-height:1.4; min-height:2.8em; }
 
   .share-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:8px; }
-  .email-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:14px; }
-  .email-row input{
-    font-family:var(--sans); font-size:0.88rem; background:var(--surface); color:var(--text);
-    border:1px solid var(--line-strong); border-radius:2px; padding:10px 12px; min-width:220px; flex:1;
-  }
-  .email-row input:focus{ border-color:var(--gold); }
-  .email-row input.input-error{ border-color:var(--wine); }
 
   .site-footer{
     margin-top:56px; padding-top:20px; border-top:1px solid var(--line);
@@ -552,7 +545,7 @@
           <li>Матрица судьбы — 9 черт характера с расшифровкой каждой</li>
           <li>Персональная рекомендация дня</li>
         </ul>
-        <p class="privacy-note">Разбор — цифровой товар: доступен на странице после оплаты. Дополнительно можно скачать PDF или получить копию на почту.</p>
+        <p class="privacy-note">Разбор — цифровой товар: доступен на странице после оплаты. Дополнительно можно скачать PDF.</p>
         <label class="consent-row">
           <input type="checkbox" id="consentCheckbox">
           <span>Согласен(на) с <a href="privacy/" target="_blank" rel="noopener">политикой конфиденциальности</a> и <a href="offer/" target="_blank" rel="noopener">публичной офертой</a></span>
@@ -671,11 +664,6 @@
         <div class="share-row">
           <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
           <button class="btn-secondary" id="downloadBtn">Скачать PDF</button>
-        </div>
-
-        <div class="email-row">
-          <input type="email" id="emailInput" placeholder="твой email" autocomplete="email">
-          <button class="btn-secondary" id="emailBtn">Отправить на почту</button>
         </div>
       </div>
     </section>
@@ -1022,9 +1010,6 @@
   var unlockBtn = document.getElementById("unlockBtn");
   var copyBtn = document.getElementById("copyBtn");
   var downloadBtn = document.getElementById("downloadBtn");
-  var emailBtn = document.getElementById("emailBtn");
-  var emailInput = document.getElementById("emailInput");
-
   var reportText = "";
   var reportFilename = "put-razbor.pdf";
 
@@ -1412,29 +1397,6 @@
       downloadBtn.disabled = false;
       downloadBtn.textContent = originalLabel;
     });
-  });
-
-  emailBtn.addEventListener("click", function(){
-    var email = emailInput.value.trim();
-    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if(!emailPattern.test(email)){
-      emailInput.classList.add("input-error");
-      emailInput.focus();
-      var originalLabel = emailBtn.textContent;
-      emailBtn.textContent = "Проверь email";
-      setTimeout(function(){ emailBtn.textContent = originalLabel; }, 1800);
-      return;
-    }
-    emailInput.classList.remove("input-error");
-    emailBtn.disabled = true;
-    emailBtn.textContent = "Отправляем...";
-    setTimeout(function(){
-      emailBtn.textContent = "Отправлено ✓";
-      setTimeout(function(){
-        emailBtn.disabled = false;
-        emailBtn.textContent = "Отправить на почту";
-      }, 2000);
-    }, 900);
   });
 })();
 </script>
