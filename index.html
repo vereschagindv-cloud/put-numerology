@@ -659,8 +659,6 @@
           <div class="matrix-grid" id="matrixGrid"></div>
         </article>
 
-        <div class="unlock-note">Тестовый режим оплаты: разбор открывается сразу, реального списания средств не происходит.</div>
-
         <div class="share-row">
           <button class="btn-secondary" id="copyBtn">Скопировать разбор</button>
           <button class="btn-secondary" id="downloadBtn">Скачать PDF</button>
@@ -1008,7 +1006,6 @@
   var paywall = document.getElementById("paywall");
   var fullContent = document.getElementById("fullContent");
   var unlockBtn = document.getElementById("unlockBtn");
-  var consentCheckbox = document.getElementById("consentCheckbox");
   var copyBtn = document.getElementById("copyBtn");
   var downloadBtn = document.getElementById("downloadBtn");
   var reportText = "";
@@ -1139,23 +1136,9 @@
     resultSection.hidden = false;
     paywall.hidden = false;
     fullContent.hidden = true;
-    unlockBtn.disabled = !consentCheckbox.checked;
+    unlockBtn.disabled = true; // приём оплаты временно отключён — раздел ниже нельзя открыть
     unlockBtn.textContent = "Открыть за 99 ₽";
     resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
-  });
-
-  consentCheckbox.addEventListener("change", function(){
-    unlockBtn.disabled = !consentCheckbox.checked;
-  });
-
-  unlockBtn.addEventListener("click", function(){
-    if(!consentCheckbox.checked) return;
-    unlockBtn.disabled = true;
-    unlockBtn.textContent = "Оплата...";
-    setTimeout(function(){
-      paywall.hidden = true;
-      fullContent.hidden = false;
-    }, 700);
   });
 
   copyBtn.addEventListener("click", function(){
