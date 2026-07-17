@@ -1209,21 +1209,26 @@
 
   (function resumeAfterPayment(){
     var params = new URLSearchParams(window.location.search);
-    var invId = params.get("invId");
-    var status = params.get("status");
+    // Robokassa's own redirect (when URL-signing is on in the dashboard)
+    // overwrites our SuccessURL query string with its own parameter set
+    // (OutSum, InvId, SignatureValue, Culture) instead of the invId/status
+    // we asked for — so accept either shape. We never trust SignatureValue
+    // here (that would mean shipping Password1 to the browser, which lets
+    // anyone forge a "paid" URL); InvId is just a lookup key, and the real
+    // paid/not-paid answer always comes from our own /check endpoint, which
+    // only reflects Robokassa's server-to-server ResultURL confirmation.
+    var invId = params.get("invId") || params.get("InvId");
 
     if(invId){
       window.history.replaceState({}, "", window.location.pathname);
-      if(status !== "success") return;
       tryUnlockPaidInvoice(invId);
       return;
     }
 
-    // Robokassa's "return to shop" button doesn't always carry our
-    // SuccessURL query params back (e.g. if the shop is configured to
-    // post them instead of a GET redirect) — a static site can't read
-    // a POST body, so fall back to the invId we saved before leaving
-    // for Robokassa and check it directly.
+    // Some shop configurations don't carry any recognizable params back at
+    // all (e.g. posting them instead of a GET redirect, which a static site
+    // can't read) — fall back to the invId we saved before leaving for
+    // Robokassa and check that directly.
     var pendingInvId = null;
     try{ pendingInvId = localStorage.getItem("put_pending_invid"); }catch(e){}
     if(pendingInvId) tryUnlockPaidInvoice(pendingInvId);
