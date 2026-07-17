@@ -1157,9 +1157,6 @@
     var dd = document.getElementById("dd").value;
     var mm = document.getElementById("mm").value;
     var yyyy = document.getElementById("yyyy").value;
-    try{
-      localStorage.setItem("put_pending_dob", JSON.stringify({ dd:dd, mm:mm, yyyy:yyyy }));
-    }catch(e){}
 
     var originalLabel = unlockBtn.textContent;
     unlockBtn.disabled = true;
@@ -1168,7 +1165,11 @@
     fetch(PAYMENTS_API + "/pay")
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if(!data.payUrl) throw new Error("no payUrl");
+        if(!data.payUrl || !data.invId) throw new Error("no payUrl");
+        try{
+          localStorage.setItem("put_pending_dob", JSON.stringify({ dd:dd, mm:mm, yyyy:yyyy }));
+          localStorage.setItem("put_pending_invid", String(data.invId));
+        }catch(e){}
         window.location.href = data.payUrl;
       })
       .catch(function(){
@@ -1179,15 +1180,8 @@
       });
   });
 
-  (function resumeAfterPayment(){
-    var params = new URLSearchParams(window.location.search);
-    var invId = params.get("invId");
-    var status = params.get("status");
+  function tryUnlockPaidInvoice(invId){
     if(!invId) return;
-
-    window.history.replaceState({}, "", window.location.pathname);
-    if(status !== "success") return;
-
     fetch(PAYMENTS_API + "/check?invId=" + encodeURIComponent(invId))
       .then(function(r){ return r.json(); })
       .then(function(data){
@@ -1205,9 +1199,34 @@
         paywall.hidden = true;
         fullContent.hidden = false;
         resultSection.scrollIntoView({ behavior:"smooth", block:"start" });
-        try{ localStorage.removeItem("put_pending_dob"); }catch(e){}
+        try{
+          localStorage.removeItem("put_pending_dob");
+          localStorage.removeItem("put_pending_invid");
+        }catch(e){}
       })
       .catch(function(){});
+  }
+
+  (function resumeAfterPayment(){
+    var params = new URLSearchParams(window.location.search);
+    var invId = params.get("invId");
+    var status = params.get("status");
+
+    if(invId){
+      window.history.replaceState({}, "", window.location.pathname);
+      if(status !== "success") return;
+      tryUnlockPaidInvoice(invId);
+      return;
+    }
+
+    // Robokassa's "return to shop" button doesn't always carry our
+    // SuccessURL query params back (e.g. if the shop is configured to
+    // post them instead of a GET redirect) — a static site can't read
+    // a POST body, so fall back to the invId we saved before leaving
+    // for Robokassa and check it directly.
+    var pendingInvId = null;
+    try{ pendingInvId = localStorage.getItem("put_pending_invid"); }catch(e){}
+    if(pendingInvId) tryUnlockPaidInvoice(pendingInvId);
   })();
 
   copyBtn.addEventListener("click", function(){
