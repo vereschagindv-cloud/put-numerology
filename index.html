@@ -355,7 +355,11 @@
   .seal-title{ font-family:var(--serif); font-style:italic; font-size:1rem; color:var(--text); }
 
   .teaser{
-    text-align:center; max-width:42ch; margin:0 auto 40px; color:var(--text-muted); font-size:1rem;
+    text-align:center; max-width:42ch; margin:0 auto 14px; color:var(--text-muted); font-size:1rem;
+  }
+
+  .essence-preview{
+    text-align:center; max-width:56ch; margin:0 auto 40px; color:var(--text); font-size:0.96rem; line-height:1.6;
   }
 
   .paywall{
@@ -609,6 +613,7 @@
         </div>
       </div>
       <p class="teaser" id="lifePathTeaser"></p>
+      <p class="essence-preview" id="lifePathEssence"></p>
 
       <div class="paywall framed" id="paywall">
         <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
@@ -660,7 +665,6 @@
 
         <article class="character">
           <h2>Твой характер</h2>
-          <p id="characterText"></p>
 
           <div class="trait-grid">
             <div>
@@ -1120,7 +1124,7 @@
     document.getElementById("lifePathNumber").textContent = lifePath;
     document.getElementById("lifePathTitle").textContent = info.title;
     document.getElementById("lifePathTeaser").textContent = info.teaser;
-    document.getElementById("characterText").textContent = info.essence;
+    document.getElementById("lifePathEssence").textContent = info.essence;
 
     var strengthsList = document.getElementById("strengthsList");
     var growthList = document.getElementById("growthList");
