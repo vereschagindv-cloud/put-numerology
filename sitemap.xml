@@ -2,16 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://waynumber.ru/</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://waynumber.ru/privacy/</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://waynumber.ru/offer/</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
