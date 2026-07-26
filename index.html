@@ -243,7 +243,7 @@
 
   .steps{
     display:flex; flex-direction:column; gap:14px; margin:32px 0 8px;
-    border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:24px 0;
+    border-top:1px solid var(--line); padding:24px 0 0;
   }
   .step{ display:flex; align-items:baseline; gap:16px; }
   .step-num{
@@ -505,10 +505,23 @@
   .share-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:8px; }
 
   .faq{ padding:48px 0 8px; border-top:1px solid var(--line); }
-  .faq h2{
-    font-family:var(--serif); font-weight:400; font-style:normal;
-    font-size:clamp(1.4rem, 1.2rem + 1vw, 1.9rem); line-height:1.2; margin:0 0 24px;
+  .faq-toggle{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    width:100%; background:none; border:none; padding:0; margin:0; cursor:pointer;
+    font-family:var(--serif); font-weight:400; font-style:normal; text-align:left;
+    font-size:clamp(1.4rem, 1.2rem + 1vw, 1.9rem); line-height:1.2; color:var(--text);
   }
+  .faq-toggle-icon{
+    flex:none; position:relative; width:20px; height:20px;
+  }
+  .faq-toggle-icon::before, .faq-toggle-icon::after{
+    content:""; position:absolute; top:50%; left:50%; background:var(--gold);
+    transform:translate(-50%,-50%);
+  }
+  .faq-toggle-icon::before{ width:14px; height:2px; }
+  .faq-toggle-icon::after{ width:2px; height:14px; transition:transform 0.15s ease; }
+  .faq-toggle[aria-expanded="true"] .faq-toggle-icon::after{ transform:translate(-50%,-50%) scaleY(0); }
+  .faq-list{ margin-top:24px; }
   .faq-item{ padding:20px 0; border-top:1px solid var(--line); }
   .faq-item:first-of-type{ border-top:none; padding-top:0; }
   .faq-item h3{
@@ -748,26 +761,31 @@
 
     <section class="faq" id="faq">
       <p class="eyebrow">Вопросы и ответы</p>
-      <h2>Частые вопросы о числе жизненного пути</h2>
-      <div class="faq-item">
-        <h3>Что такое число жизненного пути?</h3>
-        <p>Число жизненного пути — одно из ключевых понятий нумерологии, показывающее базовый характер человека, его сильные стороны и модель поведения. Оно вычисляется из полной даты рождения и остаётся неизменным на всю жизнь, в отличие от чисел года или месяца, которые каждый раз разные.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Как рассчитать число жизненного пути по дате рождения?</h3>
-        <p>Число жизненного пути получают, складывая все цифры полной даты рождения (день, месяц и год) и сводя сумму к одной цифре — кроме случаев, когда промежуточная сумма равна 11, 22 или 33 (мастер-числа не сводятся дальше). Введи свою дату в калькуляторе вверху страницы — расчёт произойдёт мгновенно и бесплатно.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Что такое матрица судьбы (квадрат Пифагора)?</h3>
-        <p>Матрица судьбы, или квадрат Пифагора, — способ разложить дату рождения на девять психологических черт характера и показать, какие из них выражены сильнее или слабее, по количеству совпадающих цифр в дате. Это дополняет число жизненного пути более подробным портретом личности.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Что означают мастер-числа 11, 22 и 33?</h3>
-        <p>Мастер-числа — это усиленные версии чисел 2, 4 и 6: 11 (Провидец) отвечает за обострённую интуицию, 22 (Архитектор) — за способность воплощать масштабные замыслы, 33 (Наставник) — за безусловную заботу и учительство. В нумерологии их не сокращают до одной цифры.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Расчёт числа жизненного пути бесплатный?</h3>
-        <p>Да, само число жизненного пути, его название и матрица судьбы рассчитываются бесплатно и сразу. Платно открывается только расширенный разбор — характер, сферы жизни, прогноз на день, месяц и год.</p>
+      <button type="button" class="faq-toggle" id="faqToggle" aria-expanded="false" aria-controls="faqList">
+        <span>Частые вопросы о числе жизненного пути</span>
+        <span class="faq-toggle-icon" aria-hidden="true"></span>
+      </button>
+      <div class="faq-list" id="faqList" hidden>
+        <div class="faq-item">
+          <h3>Что такое число жизненного пути?</h3>
+          <p>Число жизненного пути — одно из ключевых понятий нумерологии, показывающее базовый характер человека, его сильные стороны и модель поведения. Оно вычисляется из полной даты рождения и остаётся неизменным на всю жизнь, в отличие от чисел года или месяца, которые каждый раз разные.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Как рассчитать число жизненного пути по дате рождения?</h3>
+          <p>Число жизненного пути получают, складывая все цифры полной даты рождения (день, месяц и год) и сводя сумму к одной цифре — кроме случаев, когда промежуточная сумма равна 11, 22 или 33 (мастер-числа не сводятся дальше). Введи свою дату в калькуляторе вверху страницы — расчёт произойдёт мгновенно и бесплатно.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Что такое матрица судьбы (квадрат Пифагора)?</h3>
+          <p>Матрица судьбы, или квадрат Пифагора, — способ разложить дату рождения на девять психологических черт характера и показать, какие из них выражены сильнее или слабее, по количеству совпадающих цифр в дате. Это дополняет число жизненного пути более подробным портретом личности.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Что означают мастер-числа 11, 22 и 33?</h3>
+          <p>Мастер-числа — это усиленные версии чисел 2, 4 и 6: 11 (Провидец) отвечает за обострённую интуицию, 22 (Архитектор) — за способность воплощать масштабные замыслы, 33 (Наставник) — за безусловную заботу и учительство. В нумерологии их не сокращают до одной цифры.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Расчёт числа жизненного пути бесплатный?</h3>
+          <p>Да, само число жизненного пути, его название и матрица судьбы рассчитываются бесплатно и сразу. Платно открывается только расширенный разбор — характер, сферы жизни, прогноз на день, месяц и год.</p>
+        </div>
       </div>
     </section>
   </main>
@@ -1710,5 +1728,17 @@
   window.addEventListener("resize", resize);
   resize();
   requestAnimationFrame(drawFrame);
+})();
+</script>
+
+<script>
+(function(){
+  var faqToggle = document.getElementById("faqToggle");
+  var faqList = document.getElementById("faqList");
+  faqToggle.addEventListener("click", function(){
+    var expanded = faqToggle.getAttribute("aria-expanded") === "true";
+    faqToggle.setAttribute("aria-expanded", String(!expanded));
+    faqList.hidden = expanded;
+  });
 })();
 </script>
